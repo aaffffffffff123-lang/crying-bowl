@@ -85,7 +85,7 @@ header .icon{width:38px;height:38px;min-width:38px}.toolbar{gap:7px!important}
 #showFrog svg{width:34px;height:34px}
 @media(max-width:700px){#modeSwitch{right:12px;bottom:max(12px,env(safe-area-inset-bottom))}#showFrog{width:52px;height:52px;border-radius:14px}#showFrog svg{width:32px;height:32px}#dock{width:min(260px,calc(100vw - 70px))!important;left:calc(50% - 18px)!important}}
 
-</style>
+/* v0.8: 아래쪽 단추들 */#forceRow{gap:12px!important;align-items:center}#dampMini{width:62px;min-width:62px!important;height:62px;min-height:62px!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center;letter-spacing:0!important;background:rgba(20,24,29,.9)!important;border:1.5px solid rgba(214,180,120,.75)!important;box-shadow:0 10px 30px #000a,0 0 0 4px rgba(214,180,120,.08)}#dampMini svg{width:46px;height:46px;display:block}#dampMini.active{border-color:#f0d9a8!important;box-shadow:0 0 22px rgba(240,200,120,.35),0 10px 30px #000a}#soloCry{display:grid!important;place-items:center;width:46px;min-width:46px!important;height:46px;min-height:46px!important;padding:0!important;border-radius:50%!important;background:rgba(18,21,25,.85)!important;border:1px solid rgba(194,166,117,.4)!important}#soloCry svg{width:34px;height:34px;display:block}#soloCry.active{border-color:#f0d9a8!important;background:rgba(90,66,32,.55)!important}#modeSwitch{display:flex!important;opacity:0;pointer-events:none;transition:opacity .6s;border:1px solid rgba(194,166,117,.42);border-radius:16px;background:rgba(18,21,25,.88);box-shadow:0 12px 32px #0008;overflow:hidden}.playing #modeSwitch{opacity:1;pointer-events:auto}#showBowls,#showFrog{display:grid!important;place-items:center;width:50px!important;height:50px!important;min-width:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;opacity:.36;filter:saturate(.45);transition:opacity .2s,background .2s}#showBowls.active,#showFrog.active{opacity:1;filter:none;background:rgba(125,94,48,.34)!important}#showBowls svg,#showFrog svg{width:36px!important;height:36px!important}#arcadeFace{position:fixed;z-index:6;left:calc(10px + env(safe-area-inset-left,0px));bottom:max(14px,env(safe-area-inset-bottom));width:36px;height:36px;padding:4px;line-height:0;opacity:.8;touch-action:manipulation}#arcadeFace svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 1.5px #fff) drop-shadow(1px 2px 1.5px #0006)}#arcadeFace:active svg{transform:scale(.88)}.bottom-left{left:58px!important}.appendix #dock{display:block!important}.appendix #dampMini{display:none!important}@media(max-width:700px){#showBowls,#showFrog{width:46px!important;height:46px!important}#showBowls svg,#showFrog svg{width:33px!important;height:33px!important}}</style>
 </head>
 <body>
 <canvas id="stage" tabindex="0" aria-label="다섯 크라잉볼과 세 아기보울. 볼을 두드리거나 숫자 1부터 8로 연주합니다. 배경을 끌면 바깥에서 둘러봅니다."></canvas><div id="vignette"></div>
@@ -94,14 +94,14 @@ header .icon{width:38px;height:38px;min-width:38px}.toolbar{gap:7px!important}
 <button id="damp" class="icon" title="가라앉히기 · 스페이스" aria-label="울림 가라앉히기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M4 9c0 7 3 10 8 10s8-3 8-10M3 8h18M7 4v2m5-4v4m5-2v2"/></svg></button>
 <button id="mute" class="icon" title="소리 켜기 / 끄기" aria-label="소리 끄기" aria-pressed="false"></button>
 <button id="tune" class="icon" title="소리 조율" aria-label="소리 조율" aria-controls="settings" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 3v18M12 3v18M19 3v18"/><path d="M2 8h6m1 9h6m1-11h6" stroke-width="3"/></svg></button>
-<button id="appendix" class="icon" aria-label="괴구리" title="부록"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 17c-2-7 1-11 8-11s10 4 8 11M4 17h16M7 6l1-3 3 3 3-3 2 4M7 12q5 3 10 0M6 17l-1 3m13-3 1 3"/></svg></button><button id="cameraMode" class="icon" title="둘러보기 · 드래그로 시점 이동" aria-label="둘러보기 모드" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></button><button id="resetCamera" class="icon" title="처음 시점으로" aria-label="처음 시점으로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 10a7.5 7.5 0 1 1 .5 6M5 4v6h6"/></svg></button>
+<button id="appendix" class="icon" aria-label="개구리" title="부록"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 17c-2-7 1-11 8-11s10 4 8 11M4 17h16M7 6l1-3 3 3 3-3 2 4M7 12q5 3 10 0M6 17l-1 3m13-3 1 3"/></svg></button><button id="cameraMode" class="icon" title="둘러보기 · 드래그로 시점 이동" aria-label="둘러보기 모드" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z M4 7.5l8 4.5 8-4.5M12 12v9"/></svg></button><button id="resetCamera" class="icon" title="처음 시점으로" aria-label="처음 시점으로"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 10a7.5 7.5 0 1 1 .5 6M5 4v6h6"/></svg></button>
 <button id="fullscreen" class="icon" title="전체 화면" aria-label="전체 화면"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
 </div></header>
 <div id="load">준비 중</div>
 <section id="intro"><h1>CRYING BOWL</h1><p></p><button id="start" disabled>준비 중</button><span class="quiet"></span></section>
-<div id="modeSwitch"><button id="showBowls" class="active" aria-pressed="true">크라잉볼</button><button id="showFrog" aria-pressed="false">괴구리</button></div><div id="dock"><div id="viewNav"><button id="prevBowl" aria-label="왼쪽으로 돌아보기">‹</button><span id="focusLabel">01 <em>/ 08</em></span><button id="nextBowl" aria-label="오른쪽으로 돌아보기">›</button></div><div class="notes" role="group" aria-label="볼 연주">
+<div id="modeSwitch"><button id="showBowls" class="active" aria-pressed="true" aria-label="크라잉볼"></button><button id="showFrog" aria-pressed="false" aria-label="개구리"></button></div><div id="dock"><div id="viewNav"><button id="prevBowl" aria-label="왼쪽으로 돌아보기">‹</button><span id="focusLabel">01 <em>/ 08</em></span><button id="nextBowl" aria-label="오른쪽으로 돌아보기">›</button></div><div class="notes" role="group" aria-label="볼 연주">
 <button class="note" data-id="0" aria-label="큰 볼, A, 단축키 1">A<small>1</small></button><button class="note" data-id="1" aria-label="왼쪽 볼, C, 단축키 2">C<small>2</small></button><button class="note" data-id="2" aria-label="뒤쪽 왼쪽 볼, E, 단축키 3">E<small>3</small></button><button class="note" data-id="3" aria-label="오른쪽 볼, G, 단축키 4">G<small>4</small></button><button class="note" data-id="4" aria-label="뒤쪽 오른쪽 볼, D, 단축키 5">D<small>5</small></button>
-<span class="note-divider"></span><button class="note baby" data-id="5" aria-label="아기보울 A, 숫자 6">a<small>6</small></button><button class="note baby" data-id="6" aria-label="아기보울 C, 숫자 7">c<small>7</small></button><button class="note baby" data-id="7" aria-label="아기보울 E, 숫자 8">e<small>8</small></button></div><div id="forceRow"><span>타격</span><button data-force="0.40">약</button><button data-force="0.78" class="chosen">보통</button><button data-force="1.16">강</button><button id="dampMini" aria-label="모든 울림 가라앉히기">가라앉히기</button></div><div id="quickControls"><label>음량 <input id="simpleVolume" type="range" min="0" max="180" value="110"></label><label>맥놀이 · 잔향 <input id="simpleSpace" type="range" min="0" max="100" value="58"></label></div><p id="hint">볼을 두드리세요</p></div><div id="appendixDock" hidden><button id="backBowl">← 크라잉볼</button><p>등을 왕복해서 긁어보세요. 멈춰도 막대는 잠깐 남아 있습니다.</p><button id="scrapeButton">한 번 길게 긁기</button></div>
+<span class="note-divider"></span><button class="note baby" data-id="5" aria-label="아기보울 A, 숫자 6">a<small>6</small></button><button class="note baby" data-id="6" aria-label="아기보울 C, 숫자 7">c<small>7</small></button><button class="note baby" data-id="7" aria-label="아기보울 E, 숫자 8">e<small>8</small></button></div><div id="forceRow"><span>타격</span><button data-force="0.40">약</button><button data-force="0.78" class="chosen">보통</button><button data-force="1.16">강</button><button id="soloCry" aria-label="혼자 울기" aria-pressed="false"></button><button id="dampMini" aria-label="다 같이 울기"></button></div><div id="quickControls"><label>음량 <input id="simpleVolume" type="range" min="0" max="180" value="110"></label><label>맥놀이 · 잔향 <input id="simpleSpace" type="range" min="0" max="100" value="58"></label></div><p id="hint">볼을 두드리세요</p></div><div id="appendixDock" hidden><button id="backBowl">← 크라잉볼</button><p>등을 왕복해서 긁어보세요. 멈춰도 막대는 잠깐 남아 있습니다.</p><button id="scrapeButton">한 번 길게 긁기</button></div>
 <div class="bottom-left"><div id="resonance"><i></i><i></i><i></i></div><span></span></div>
 <aside id="settings" hidden aria-label="소리 조율"><button id="closeSettings" aria-label="닫기">×</button><h2>소리 조율</h2><div id="profileLabel">01 · A — 211806 원본</div>
 <label class="slider">전체 음량<input id="volume" type="range" min="0" max="180" value="110" aria-label="전체 음량"></label>
@@ -110,7 +110,7 @@ header .icon{width:38px;height:38px;min-width:38px}.toolbar{gap:7px!important}
 <label class="slider">잔향<input id="room" type="range" min="0" max="100" value="48" aria-label="공간 잔향"></label>
 <label class="slider">레퍼런스<input id="reference" type="range" min="0" max="100" value="68" aria-label="레퍼런스 공명 비중"></label><label class="slider">갈라짐<input id="fracture" type="range" min="0" max="100" value="48" aria-label="울음의 음정 갈라짐, 지지직 왜곡음 없음"></label><label class="slider">눈물<input id="tears" type="range" min="20" max="160" value="100" aria-label="물방울 양"></label><label class="slider">일그러짐<input id="wrinkles" type="range" min="30" max="140" value="100" aria-label="표정과 주름 강도"></label><label class="check"><input id="original" type="checkbox">211806 원본 소리로 비교</label><label class="check"><input id="uiSound" type="checkbox" checked>UI 팅샤 소리</label><label class="check"><input id="harmony" type="checkbox" checked>낮은 화음 깔기</label><label class="check"><input id="motion" type="checkbox">진동과 빛의 파동 줄이기</label>
 <p>숫자 1–8 · A S D F G H J K로 연주<br>Shift를 함께 누르면 더 강하게<br>두드릴 때마다 한 단계씩 · 일곱 단계<br>Space: 울림 가라앉히기<br>바람 아이콘: 볼들이 천천히 함께 울립니다<br>배경 드래그 / 우클릭 드래그: 둘러보기<br>마우스 휠 / 두 손가락: 거리 조절<br>좌우 화살표: 원 바깥에서 72° 돌아보기<br>볼 버튼은 소리만 내며 시점을 바꾸지 않습니다<br><button id="copyValues" class="plain">설정값 복사</button> <button id="resetValues" class="plain">설정 초기화</button></p></aside>
-<div id="toast" role="status"></div><div id="error" hidden><div><strong>울림을 시작하지 못했습니다.</strong><p id="errorText"></p><button id="retry">다시 열기</button></div></div>
+<a id="arcadeFace" href="https://aaffffffffff123-lang.github.io/arcade/" target="_top" aria-label="혐규오락실 — 다른 게임 하러 가기" title="혐규오락실"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24.00 2.84 C27.19 2.93 30.48 3.49 33.44 4.70 C36.39 5.91 39.79 7.65 41.72 10.08 C43.64 12.51 44.41 16.18 44.97 19.28 C45.53 22.39 45.73 25.72 45.08 28.74 C44.42 31.76 43.07 35.11 41.06 37.40 C39.05 39.69 35.87 41.15 33.03 42.47 C30.19 43.79 27.09 45.14 24.00 45.31 C20.91 45.47 17.40 44.72 14.49 43.46 C11.58 42.19 8.30 40.21 6.54 37.72 C4.78 35.22 4.45 31.57 3.93 28.51 C3.41 25.45 2.76 22.23 3.42 19.37 C4.08 16.52 6.10 13.90 7.91 11.36 C9.72 8.82 11.61 5.56 14.29 4.14 C16.97 2.72 20.81 2.75 24.00 2.84 Z" fill="#221D1F"/><g stroke="#EFF1EC" stroke-width="2.2" stroke-linecap="round" fill="none"><path d="M13.2 8.4V17.9"/><path d="M20.4 6.2V16.6"/><path d="M27.6 6.2V16.6"/><path d="M34.6 8.8V18.3"/></g><g fill="#EFF1EC"><ellipse cx="18.1" cy="25.2" rx="2" ry="2.3"/><ellipse cx="29.9" cy="25.2" rx="2" ry="2.3"/></g><path d="M19.9 32.3a4.6 4.6 0 0 0 8.2 0" fill="none" stroke="#EFF1EC" stroke-width="2.3" stroke-linecap="round"/></svg></a><div id="toast" role="status"></div><div id="error" hidden><div><strong>울림을 시작하지 못했습니다.</strong><p id="errorText"></p><button id="retry">다시 열기</button></div></div>
 
 <script>
 'use strict';
@@ -783,9 +783,9 @@ class AudioEngine{
   this.voices=NOTES.map((_,i)=>i<5?new ReferenceVoice(this,i):new BabyVoice(this,i));
   this.pad=c.createGain();this.pad.gain.value=0;this.pad.connect(this.convolver);this.pad.connect(this.bus);
   for(let f of [55,82.406889,130.812783,195.997718]){let o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.value=f>100?.013:.019;o.connect(g);g.connect(this.pad);o.start();}
-  this.scraper=new ScrapeVoice(this);this.ready=true;
+  this.scraper=new ScrapeVoice(this);this.buildDrone();this.ready=true;
  }
- tick(){if(!this.ready)return;let t=this.ctx.currentTime,sum=0;for(let v of this.voices)sum+=v.tick(t);this.pad.gain.setTargetAtTime(this.harmony?Math.min(.72,sum*.20):0,t,.65);this.master.gain.setTargetAtTime(this.muted?0:this.volume,t,.05);this.wet.gain.setTargetAtTime(this.room,t,.2);}
+ tick(){if(!this.ready)return;let t=this.ctx.currentTime,sum=0;for(let v of this.voices)sum+=v.tick(t);this.pad.gain.setTargetAtTime(this.harmony?Math.min(.72,sum*.20):0,t,.65);this.master.gain.setTargetAtTime(this.muted?0:this.volume,t,.05);this.wet.gain.setTargetAtTime(this.room,t,.2);this.tickDrone(sum);}
  hit(i,strength,delay=0){if(!this.ready)return;this.voices[i].hit(strength,this.ctx.currentTime+delay);let c=this.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=this.knock;f.type='lowpass';f.frequency.value=1400+i*180;g.gain.value=.043*strength;s.connect(f);f.connect(g);g.connect(this.bus);s.onended=()=>{s.disconnect();f.disconnect();g.disconnect();};s.start(c.currentTime+delay);}
  damp(){for(let v of this.voices)v.damp();}
 }
@@ -1145,7 +1145,7 @@ class TearFlow{
 }
 
 
- constructor(scene,id,pos,scale,angle){
+class Bowl{ constructor(scene,id,pos,scale,angle){
   Object.assign(this,{scene,id,pos,home:pos.slice(),scale,homeScale:scale,angle,rot:[0,0,0],energy:0,open:0,expression:0,blink:0,pulse:0,tearFlow:0,parts:[],streams:[],dropClock:0,hitAt:-10});
   const mesh=id===0?scene.sculpt:id<5?scene.sculptMid:scene.sculptLow,body={kind:1,color:BRONZE[id],metal:.90,rough:.33};
   for(const name of ['shell','skin'])this.parts.push({name,mesh:mesh[name],mat:body});
@@ -1474,7 +1474,7 @@ class Scene{
   }else{
    c.fov=(this.mobile?46:40)*Math.PI/180;target=this.mainTarget;
    const pitch=this.orbit.pitch,dir=[Math.sin(this.viewAngle)*Math.cos(pitch),Math.sin(pitch),Math.cos(this.viewAngle)*Math.cos(pitch)];
-   eye=V.add(target,V.mul(dir,this.fitDistance*this.orbit.zoom));c.offset=this.centerNDC;
+   eye=V.add(target,V.mul(dir,this.fitDistance*this.orbit.zoom*(1+PLAY.wail.pull*(this.wailPull||0))));c.offset=this.centerNDC;
   }
   c.eye=eye;c.target=target;c.reye=[eye[0],-eye[1]-.26,eye[2]];
   const proj=M.perspective(c.fov,a,.1,150);proj[9]=-c.offset;
@@ -1582,7 +1582,7 @@ class App{
   await this.startPromise;this.startPromise=null;
  }
  toast(text){$('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),1900);}
- updateModeToggle(isAppendix=this.scene?.appendix){const b=$('#showFrog');if(!b)return;b.innerHTML=isAppendix?bowlToggleIcon:frogToggleIcon;b.setAttribute('aria-label',isAppendix?'크라잉볼로 전환':'괴구리로 전환');b.title=isAppendix?'크라잉볼':'괴구리';}
+ updateModeToggle(isAppendix=this.scene?.appendix){const f=$('#showFrog'),b=$('#showBowls');if(!f||!b)return;f.innerHTML=frogToggleIcon;b.innerHTML=bowlToggleIcon;f.classList.toggle('active',!!isAppendix);b.classList.toggle('active',!isAppendix);f.setAttribute('aria-pressed',String(!!isAppendix));b.setAttribute('aria-pressed',String(!isAppendix));f.title='개구리';b.title='크라잉볼';}
  loadPrefs(){
   try{
    const old=JSON.parse(localStorage.getItem('crying-bowl-v1')||'{}'),added=JSON.parse(localStorage.getItem('crying-bowl-v03-additions')||'{}'),saved=JSON.parse(localStorage.getItem('crying-bowl-v04')||'{}'),p={...old,...added,...saved};
@@ -1598,7 +1598,7 @@ class App{
  damp(){this.audio.damp();this.setWind(false);for(const p of this.pointers.values())if(p.mode==='bowl')p.mode='idle';this.scene.creature.level=0;this.scene.creature.lv=0;}
  async appendix(on){
   await this.start();if(!this.audio.ready)return;this.damp();this.releaseAll();this.scene.appendix=on;this.scene.drops=[];this.scene.splashes=[];this.scene.dropBatch.instances=0;
-  document.body.classList.toggle('appendix',on);$('#appendixDock').hidden=!on;$('#appendix').classList.toggle('active',on);$('#appendix').setAttribute('aria-pressed',String(on));$('#appendix').setAttribute('aria-label',on?'크라잉볼로 돌아가기':'괴구리 열기');this.updateModeToggle(on);$('#showFrog').setAttribute('aria-pressed',String(on));
+  document.body.classList.toggle('appendix',on);$('#appendixDock').hidden=!on;$('#appendix').classList.toggle('active',on);$('#appendix').setAttribute('aria-pressed',String(on));$('#appendix').setAttribute('aria-label',on?'크라잉볼로 돌아가기':'개구리 열기');this.updateModeToggle(on);$('#showFrog').setAttribute('aria-pressed',String(on));
   this.settings(false,false);this.scene.updateCamera();this.audio.uiTing(on?'open':'close');this.updateLabels(true);
  }
  settings(open,withSound=true){$('#settings').hidden=!open;$('#tune').setAttribute('aria-expanded',String(open));if(withSound)this.audio.uiTing(open?'open':'close');}
@@ -1609,16 +1609,16 @@ class App{
   const t=this.audio.ctx.currentTime;if(t-this.lastHit[i]<.065)return;this.lastHit[i]=t;this.audio.hit(i,strength,.10);this.scene.hit(i,t,strength);
   const n=$('.note[data-id="'+i+'"]');n.classList.add('struck');clearTimeout(n._timer);n._timer=setTimeout(()=>n.classList.remove('struck'),240);
  }
- scrape(){if(this.audio.ready&&this.scene.appendix){this.audio.scraper.stroke(.78);this.scene.creature.stroke();}}
+ scrape(){if(this.audio.ready&&this.scene.appendix){this.lastTouch=this.time;if(this.solo)this.solo.queue.length=0;this.audio.scraper.stroke(.78);this.scene.creature.stroke();}}
  events(){
   $('#start').addEventListener('click',()=>this.start());$('#retry').addEventListener('click',()=>location.reload());
   $('#tune').addEventListener('click',()=>this.settings($('#settings').hidden));$('#closeSettings').addEventListener('click',()=>this.settings(false));
   $('#mute').addEventListener('click',()=>{this.audio.muted=!this.audio.muted;$('#mute').innerHTML=this.audio.muted?speakerOff:speakerOn;$('#mute').setAttribute('aria-pressed',String(this.audio.muted));$('#mute').setAttribute('aria-label',this.audio.muted?'소리 켜기':'소리 끄기');});
-  $('#wind').addEventListener('click',async()=>{await this.start();if(this.audio.ready)this.setWind(!this.wind);});$('#damp').addEventListener('click',()=>this.damp());$('#dampMini').addEventListener('click',()=>{this.damp();this.audio.uiTing('close');});$('#showFrog').addEventListener('pointerdown',e=>e.stopPropagation());
+  $('#wind').addEventListener('click',async()=>{await this.start();if(this.audio.ready)this.setWind(!this.wind);});$('#damp').addEventListener('click',()=>this.damp());$('#dampMini').addEventListener('click',()=>this.toggleWail());$('#soloCry').addEventListener('click',()=>this.toggleSolo());$('#showBowls').addEventListener('click',()=>this.appendix(false));$('#showFrog').addEventListener('pointerdown',e=>e.stopPropagation());
   $('#cameraMode').addEventListener('click',()=>{this.cameraMode=!this.cameraMode;$('#cameraMode').classList.toggle('active',this.cameraMode);$('#cameraMode').setAttribute('aria-pressed',String(this.cameraMode));this.updateLabels(true);});
   $('#resetCamera').addEventListener('click',()=>{this.scene.resetCamera();this.toast('전체가 보이는 처음 시점');});
   $('#prevBowl').addEventListener('click',()=>this.scene.focus(this.scene.focusIndex-1));$('#nextBowl').addEventListener('click',()=>this.scene.focus(this.scene.focusIndex+1));
-  $('#appendix').addEventListener('click',()=>this.appendix(!this.scene.appendix));$('#backBowl').addEventListener('click',()=>this.appendix(false));$('#scrapeButton').addEventListener('click',()=>this.scrape());$('#showFrog').addEventListener('click',()=>this.appendix(!this.scene.appendix));
+  $('#appendix').addEventListener('click',()=>this.appendix(!this.scene.appendix));$('#backBowl').addEventListener('click',()=>this.appendix(false));$('#scrapeButton').addEventListener('click',()=>this.scrape());$('#showFrog').addEventListener('click',()=>this.appendix(true));
   $('#volume').addEventListener('input',e=>{this.audio.volume=+e.target.value/100;this.save();});$('#waves').addEventListener('input',e=>{this.audio.waves=+e.target.value/100;this.save();});$('#room').addEventListener('input',e=>{this.audio.room=+e.target.value/100;this.save();});
   $('#tears').addEventListener('input',e=>{this.scene.tearAmount=+e.target.value/100;this.save();});$('#wrinkles').addEventListener('input',e=>{this.scene.wrinkleAmount=+e.target.value/100;this.save();});
   for(const k of ['harmony','uiSound'])$('#'+k).addEventListener('change',e=>{this.audio[k]=e.target.checked;this.save();});
@@ -1638,7 +1638,7 @@ class App{
   const canvas=$('#stage');
   canvas.addEventListener('pointerdown',e=>{
    e.preventDefault();canvas.focus({preventScroll:true});try{canvas.setPointerCapture(e.pointerId);}catch(_){}
-   const now=performance.now(),p={x:e.clientX,y:e.clientY,prevX:e.clientX,prevY:e.clientY,time:now,distance:0,mode:'orbit'};
+   const now=performance.now(),p={x:e.clientX,y:e.clientY,prevX:e.clientX,prevY:e.clientY,time:now,distance:0,mode:'orbit',t0:now,x0:e.clientX,y0:e.clientY};
    this.pointers.set(e.pointerId,p);
    if(this.pointers.size>1&&!this.scene.appendix){for(const q of this.pointers.values())q.mode='orbit';if(this.audio.ready)for(const v of this.audio.voices)v.rub=0;return;}
    if(!this.started)return;
@@ -1687,7 +1687,7 @@ class App{
  updateLabels(force=false){
   const i=this.scene.focusIndex,key=`${i}-${this.scene.appendix}-${this.audio.original}-${this.cameraMode}`;if(!force&&this.labelKey===key)return;this.labelKey=key;
   $('#focusLabel').innerHTML=`${String(i+1).padStart(2,'0')} <em>/ ${String(this.scene.bowls.length).padStart(2,'0')}</em> · ${NOTES[i].name}`;
-  $('#profileLabel').textContent=this.scene.appendix?'괴구리':'크라잉볼';
+  $('#profileLabel').textContent=this.scene.appendix?'개구리':'크라잉볼';
   $('#hint').textContent=this.cameraMode?'드래그로 원 바깥 둘러보기 · 휠 / 두 손가락으로 확대':'볼: 연주 · 배경: 회전 · 휠 / 두 손가락: 확대';
   for(const b of document.querySelectorAll('.note'))b.classList.toggle('focused',+b.dataset.id===i);
  }
@@ -1695,13 +1695,112 @@ class App{
   if(!this.ready)return;requestAnimationFrame(()=>this.loop());const now=performance.now(),raw=(now-this.lastFrame)/1000,dt=clamp(raw,.001,.055);this.lastFrame=now;if(document.hidden)return;
   this.time=this.audio.ready?this.audio.ctx.currentTime:now/1000;
 
-  if(this.wind&&!this.scene.appendix&&this.time>=this.nextWind){this.hit(Math.floor(Math.random()*8),.45+Math.random()*.29);this.nextWind=this.time+1.7+Math.random()*2.7;}
+  this.playTick(dt);
   this.scene.tick(this.time,dt,this.audio);this.scene.render(this.time);this.updateLabels();this.frames++;this.fps=lerp(this.fps,1/Math.max(.001,raw),.06);
   if(this.frames%4===0){let sum=0;for(const b of this.scene.bowls){sum+=b.energy;$('.note[data-id="'+b.id+'"]').style.setProperty('--e',clamp(b.energy).toFixed(3));}$('#resonance').style.setProperty('--power',clamp(sum/3).toFixed(3));}
   // Resolution adapts, never audio or the shape / number of instruments.
   if(!this.test){this.slow=raw>.041?this.slow+1:Math.max(0,this.slow-2);if(this.frames>130&&this.slow>80&&this.dpr>1){this.dpr=Math.max(1,this.dpr-.2);this.slow=0;this.resize();}}
  }
 }
+/* ===== 베이스 · 혼자 울기 · 달래기 · 다 같이 울기 =====
+ * 조율은 아래 PLAY의 숫자로 합니다.
+ */
+const PLAY={
+ drone:{level:.5,rise:1.5,wind:.05,             // 바닥 음의 기본 크기, 울음이 커질 때 따라 커지는 정도, 바람 소리 크기
+  partials:[[55,.36,.030,.061],[110,.46,.024,.083],[165,.62,.014,.047],[220,.5,.007,.11],[330,.8,.004,.071]]}, // [주파수, 맥놀이 Hz, 크기, 부풀었다 가라앉는 속도 Hz]
+ wail:{need:6,stage:6,feed:16,pull:.16},         // 볼 need개가 stage단계 이상이면 저절로 터짐, 버튼으로 터뜨리면 feed초 동안 이어짐, 카메라가 물러나는 정도
+ solo:{pause:6,swellEvery:45},                   // 직접 치면 pause초 쉬었다가 다시 혼자 움, 북받치는 구절은 swellEvery초에 한 번까지만
+ soothe:{after:.5,rate:2.2,still:10},frog:{pause:6,swellEvery:50,max:3.8}             // 손을 얹고 after초 지나면 달래기 시작, 초당 rate단계씩 잦아듦, still px 안에서 가만히 있어야 함
+};
+const FROG_ICONS={solo:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M17 30c1-13 8-21 15-21s14 8 15 21Z' fill='#a5763c'/><path d='M24 14h16M21 19h22M19 24h26' fill='none' stroke='#6b4722' stroke-width='2.4' stroke-linecap='round'/><path d='M11 53l-5 7M16 55l-2 7M21 56l1 6M53 53l5 7M48 55l2 7M43 56l-1 6' fill='none' stroke='#a5763c' stroke-width='3.4' stroke-linecap='round'/><ellipse cx='32' cy='42' rx='28' ry='15' fill='#d2a466'/><path d='M4 43c2 9 13 14 28 14s26-5 28-14c-7 6-17 8-28 8S11 49 4 43Z' fill='#b98a4e'/><circle cx='17' cy='28' r='9.5' fill='#b98a4e'/><circle cx='47' cy='28' r='9.5' fill='#b98a4e'/><circle cx='17' cy='28' r='6.6' fill='#140d07'/><circle cx='47' cy='28' r='6.6' fill='#140d07'/><circle cx='14.6' cy='25.6' r='2' fill='#fff'/><circle cx='44.6' cy='25.6' r='2' fill='#fff'/><circle cx='28.5' cy='39' r='1.4' fill='#4a2f16'/><circle cx='35.5' cy='39' r='1.4' fill='#4a2f16'/><path d='M9 47q23-6 46 0' fill='none' stroke='#4a2f16' stroke-width='2.8' stroke-linecap='round'/><path d='M12 37Q8.4 41.48 8.4 44A3.6 3.6 0 1 0 15.6 44Q15.6 41.48 12 37Z' fill='#a9def5'/><circle cx='10.7' cy='43.5' r='1.0' fill='#fff'/><path d='M52 37Q48 42.2 48 45A4 4 0 1 0 56 45Q56 42.2 52 37Z' fill='#a9def5'/><circle cx='50.6' cy='44.4' r='1.1' fill='#fff'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M46.5 43.5l10 6.5-10 6.5Z' fill='#e9cc96'/></svg>`,soloOn:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M17 30c1-13 8-21 15-21s14 8 15 21Z' fill='#a5763c'/><path d='M24 14h16M21 19h22M19 24h26' fill='none' stroke='#6b4722' stroke-width='2.4' stroke-linecap='round'/><path d='M11 53l-5 7M16 55l-2 7M21 56l1 6M53 53l5 7M48 55l2 7M43 56l-1 6' fill='none' stroke='#a5763c' stroke-width='3.4' stroke-linecap='round'/><ellipse cx='32' cy='42' rx='28' ry='15' fill='#d2a466'/><path d='M4 43c2 9 13 14 28 14s26-5 28-14c-7 6-17 8-28 8S11 49 4 43Z' fill='#b98a4e'/><circle cx='17' cy='28' r='9.5' fill='#b98a4e'/><circle cx='47' cy='28' r='9.5' fill='#b98a4e'/><circle cx='17' cy='28' r='6.6' fill='#140d07'/><circle cx='47' cy='28' r='6.6' fill='#140d07'/><circle cx='14.6' cy='25.6' r='2' fill='#fff'/><circle cx='44.6' cy='25.6' r='2' fill='#fff'/><circle cx='28.5' cy='39' r='1.4' fill='#4a2f16'/><circle cx='35.5' cy='39' r='1.4' fill='#4a2f16'/><path d='M9 47q23-6 46 0' fill='none' stroke='#4a2f16' stroke-width='2.8' stroke-linecap='round'/><path d='M12 37Q8.4 41.48 8.4 44A3.6 3.6 0 1 0 15.6 44Q15.6 41.48 12 37Z' fill='#a9def5'/><circle cx='10.7' cy='43.5' r='1.0' fill='#fff'/><path d='M52 37Q48 42.2 48 45A4 4 0 1 0 56 45Q56 42.2 52 37Z' fill='#a9def5'/><circle cx='50.6' cy='44.4' r='1.1' fill='#fff'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M45 44h3.8v12H45ZM51.2 44H55v12h-3.8Z' fill='#e9cc96'/></svg>`};const UI_ICONS={wail:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M32 9V2M17 11l-4-6M47 11l4-6' fill='none' stroke='#e9cc96' stroke-width='3.2' stroke-linecap='round'/><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><path d='M12 30l11 4.5-11 4.5M52 30l-11 4.5 11 4.5' fill='none' stroke='#2a1c0e' stroke-width='4.2' stroke-linecap='round' stroke-linejoin='round'/><path d='M20 56c1-13 23-13 24 0c-6 3.5-18 3.5-24 0Z' fill='#2a1c0e'/><path d='M15 42v20M49 42v20' fill='none' stroke='#cfe6ef' stroke-width='6.5' stroke-linecap='round'/><path d='M15 43v17M49 43v17' fill='none' stroke='#ffffff' stroke-width='1.6' stroke-linecap='round' opacity='.8'/></svg>`,stop:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><path d='M13 34q5.5 4.5 11 0M40 34q5.5 4.5 11 0' fill='none' stroke='#2a1c0e' stroke-width='3.8' stroke-linecap='round'/><path d='M27 47h10' fill='none' stroke='#2a1c0e' stroke-width='3.6' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><rect x='45' y='45' width='10' height='10' rx='1.5' fill='#e9cc96'/></svg>`,solo:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><circle cx='21' cy='34' r='2.8' fill='#2a1c0e'/><circle cx='43' cy='34' r='2.8' fill='#2a1c0e'/><path d='M27 46q5 -3 10 0' fill='none' stroke='#2a1c0e' stroke-width='3.4' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M46.5 43.5l10 6.5-10 6.5Z' fill='#e9cc96'/></svg>`,soloOn:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><circle cx='21' cy='34' r='2.8' fill='#2a1c0e'/><circle cx='43' cy='34' r='2.8' fill='#2a1c0e'/><path d='M27 46q5 -3 10 0' fill='none' stroke='#2a1c0e' stroke-width='3.4' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M45 44h3.8v12H45ZM51.2 44H55v12h-3.8Z' fill='#e9cc96'/></svg>`};
+/* 바닥에 깔리는 음: 라와 미만으로 비워 두고, 맥놀이와 어두운 바람을 얹는다. 10초 주기로 숨 쉬듯 부푼다. */
+AudioEngine.prototype.buildDrone=function(){
+ const c=this.ctx,d=this.drone={};
+ const swell=(param,hz,depth)=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=hz;g.gain.value=depth;o.connect(g);g.connect(param);o.start();};
+ d.tone=c.createBiquadFilter();d.tone.type='lowpass';d.tone.frequency.value=720;d.tone.Q.value=.5;
+ d.breathe=c.createGain();d.breathe.gain.value=1;swell(d.breathe.gain,.1,.32);
+ d.out=c.createGain();d.out.gain.value=0;d.tone.connect(d.breathe);d.breathe.connect(d.out);d.out.connect(this.bus);
+ d.send=c.createGain();d.send.gain.value=.22;d.out.connect(d.send);d.send.connect(this.convolver);
+ for(const [hz,beat,amp,rate] of PLAY.drone.partials)for(const side of [-1,1]){const o=c.createOscillator(),g=c.createGain();o.frequency.value=hz+side*beat/2;g.gain.value=amp;o.connect(g);g.connect(d.tone);o.start();if(side>0)swell(g.gain,rate,amp*.6);}
+ const n=c.createBuffer(1,Math.floor(c.sampleRate*4),c.sampleRate),data=n.getChannelData(0),r=seeded(7741);let last=0;
+ for(let i=0;i<data.length;i++){last=last*.985+(r()*2-1)*.12;data[i]=last;}
+ const gap=data[data.length-1]-data[0];for(let i=0;i<data.length;i++)data[i]-=gap*i/(data.length-1);   // 반복 지점에서 툭 끊기지 않게
+ d.wind=c.createBufferSource();d.wind.buffer=n;d.wind.loop=true;
+ for(const [hz,q,amp,rate] of [[170,.8,1,.07],[410,1.4,.35,.045]]){const f=c.createBiquadFilter(),g=c.createGain();f.type='bandpass';f.frequency.value=hz;f.Q.value=q;g.gain.value=amp*PLAY.drone.wind;d.wind.connect(f);f.connect(g);g.connect(d.tone);swell(g.gain,rate,amp*PLAY.drone.wind*.55);swell(f.frequency,rate*.6,hz*.25);}
+ d.wind.start();
+};
+AudioEngine.prototype.tickDrone=function(sum){
+ const d=this.drone;if(!d)return;const t=this.ctx.currentTime,lvl=clamp(Math.max(sum/3.2,this.wailLevel||0));
+ d.out.gain.setTargetAtTime(PLAY.drone.level*(1+PLAY.drone.rise*lvl),t,1.4);d.tone.frequency.setTargetAtTime(lerp(720,430,lvl),t,1.6);
+};
+/* 달래기: 단계와 소리가 함께 빠르게 잦아든다 */
+BowlVoice.prototype.calm=function(dt){
+ const q=this.crySequence,v=Math.max(0,q.value-dt*PLAY.soothe.rate);
+ q.queue.length=0;q.move=null;q.dwell=0;q.value=q.target=v;this.pRef=Math.min(this.pRef||0,v);
+ this.strength*=Math.exp(-dt*2.6);this.rub=0;if(this.carry)this.carry*=Math.exp(-dt*6);
+};
+{
+ const hit0=App.prototype.hit,damp0=App.prototype.damp;
+ App.prototype.setupPlay=function(){this.wail={active:false,t0:0,next:Array(8).fill(0),count:Array(8).fill(0)};this.solo={on:false,queue:[],rest:0,lastSwell:-99};this.lastTouch=-99;this.refreshButtons();};
+ App.prototype.refreshButtons=function(){
+  const w=$('#dampMini'),s=$('#soloCry');if(!w||!s)return;
+  w.innerHTML=this.wail.active?UI_ICONS.stop:UI_ICONS.wail;w.classList.toggle('active',this.wail.active);w.setAttribute('aria-label',this.wail.active?'모두 멈추기':'다 같이 울기');
+  const fi=this.scene?.appendix?FROG_ICONS:UI_ICONS;s.innerHTML=this.solo.on?fi.soloOn:fi.solo;s.classList.toggle('active',this.solo.on);s.setAttribute('aria-pressed',String(this.solo.on));
+ };
+ /* 직접 치면 혼자 울기는 잠깐 쉰다 */
+ App.prototype.hit=function(i,strength){if(this.solo){this.lastTouch=this.time;this.solo.queue.length=0;}return hit0.call(this,i,strength);};
+ App.prototype.autoStrike=function(i,strength,mallet){
+  if(!this.audio.ready||this.scene.appendix)return;
+  if(mallet)return hit0.call(this,i,strength);
+  const t=this.audio.ctx.currentTime;this.audio.hit(i,strength,.10);this.scene.bowls[i].hitAt=t+.10;this.scene.rings.push({id:i,t:t+.1,strength});if(this.scene.rings.length>22)this.scene.rings.shift();
+ };
+ App.prototype.startWail=function(natural){const w=this.wail,t=this.time;w.active=true;w.t0=t;w.count.fill(0);for(let i=0;i<8;i++)w.next[i]=t+(natural?Math.random()*.4:.1*i);this.solo.queue.length=0;this.refreshButtons();};
+ App.prototype.toggleWail=async function(){
+  await this.start();if(!this.audio.ready||this.scene.appendix)return;if(!this.wail)this.setupPlay();
+  if(this.wail.active){this.damp();this.solo.on=false;this.audio.uiTing('close');}else this.startWail(false);
+  this.refreshButtons();
+ };
+ App.prototype.toggleSolo=async function(){
+  await this.start();if(!this.audio.ready)return;if(!this.wail)this.setupPlay();
+  this.solo.on=!this.solo.on;this.solo.queue.length=0;this.solo.rest=this.time+.6;this.lastTouch=-99;this.audio.uiTing(this.solo.on?'open':'close');this.refreshButtons();
+ };
+ App.prototype.damp=function(){damp0.call(this);if(this.wail){this.wail.active=false;this.refreshButtons();}if(this.solo)this.solo.queue.length=0;}; App.prototype.frogScrape=function(force){if(!this.audio.ready||!this.scene.appendix)return;this.audio.scraper.stroke(force);this.scene.creature.stroke();}; App.prototype.composeFrogPhrase=function(){const s=this.solo;let t=this.time+.3;if(this.time-s.lastSwell>PLAY.frog.swellEvery&&Math.random()<.25){s.lastSwell=this.time;const n=5+Math.floor(Math.random()*3);for(let k=0;k<n;k++){s.queue.push({at:t,frog:true,s:.45+.4*k/(n-1)});t+=.95+Math.random()*.35;}s.rest=t+9+Math.random()*5;}else{const n=1+Math.floor(Math.random()*3);for(let k=0;k<n;k++){s.queue.push({at:t,frog:true,s:.4+Math.random()*.25});t+=1.4+Math.random()*.7;}s.rest=t+4+Math.random()*5;}}; App.prototype.frogTick=function(){const s=this.solo,sc=this.scene,t=this.time;if([...this.pointers.values()].some(p=>p.mode==='scrape')){this.lastTouch=t;s.queue.length=0;}if(!s.on||t<this.lastTouch+PLAY.frog.pause)return;if(!s.queue.length&&t>=s.rest)this.composeFrogPhrase();while(s.queue.length&&s.queue[0].at<=t){const n=s.queue.shift();if(n.frog&&sc.creature.lv<PLAY.frog.max)this.frogScrape(n.s);}};
+ /* 한 볼이 두세 번 훌쩍이면 옆 볼이 받아 준다. 가끔 한 볼이 혼자 북받쳤다가 잦아든다. 절정까지는 가지 않는다. */
+ App.prototype.composePhrase=function(){
+  const s=this.solo,v=this.audio.voices,lead=Math.random()<.7?Math.floor(Math.random()*5):5+Math.floor(Math.random()*3),near=(lead+(Math.random()<.5?1:7))%8;let t=this.time+.4;
+  if(this.time-s.lastSwell>PLAY.solo.swellEvery&&Math.random()<.22&&v[lead].lv<3){
+   s.lastSwell=this.time;const n=4+Math.floor(Math.random()*3);
+   for(let k=0;k<n;k++){s.queue.push({at:t,i:lead,s:.5+.45*k/(n-1)});t+=.55+Math.random()*.2;}
+   t+=.9;s.queue.push({at:t,i:near,s:.5});t+=1.1+Math.random();s.queue.push({at:t,i:near,s:.45});s.rest=t+8+Math.random()*4;
+  }else{
+   const n=2+Math.floor(Math.random()*2);
+   for(let k=0;k<n;k++){s.queue.push({at:t,i:lead,s:.42+Math.random()*.18});t+=.9+Math.random()*.6;}
+   t+=.4+Math.random()*.8;s.queue.push({at:t,i:near,s:.4+Math.random()*.12});s.rest=t+3+Math.random()*3;
+  }
+ };
+ App.prototype.playTick=function(dt){
+  if(!this.wail)this.setupPlay();
+  const a=this.audio,w=this.wail,s=this.solo,sc=this.scene;
+  if(this.soloMode!==sc.appendix){this.soloMode=sc.appendix;s.queue.length=0;s.rest=this.time+1;this.refreshButtons();}if(!a.ready)return;if(sc.appendix){sc.wailPull=lerp(sc.wailPull||0,0,1-Math.exp(-dt*.8));a.wailLevel=0;this.frogTick();return;}
+  const t=this.time,now=performance.now();
+  /* 달래기: 울고 있는 볼에 손을 얹고 가만히 있으면 그 볼만 잦아든다 */
+  for(const p of this.pointers.values())if(p.mode==='bowl'&&now-p.t0>PLAY.soothe.after*1000&&Math.hypot(p.x-p.x0,p.y-p.y0)<PLAY.soothe.still)a.voices[p.bowl].calm(dt);
+  /* 다 같이 울기: 버튼으로도, 직접 쳐서도 터진다 */
+  if(!w.active&&a.voices.filter(v=>v.lv>=PLAY.wail.stage).length>=PLAY.wail.need)this.startWail(true);
+  if(w.active){
+   if(t-w.t0<PLAY.wail.feed){for(let i=0;i<8;i++)if(t>=w.next[i]){const lv=a.voices[i].lv;this.autoStrike(i,clamp(.6+.08*w.count[i],.6,1.1),false);w.count[i]++;w.next[i]=t+(lv<6.4?.48+.1*Math.random():1.2+.8*Math.random());}}
+   else if(a.voices.every(v=>v.lv<.6)){w.active=false;this.refreshButtons();}
+  }
+  a.wailLevel=lerp(a.wailLevel||0,w.active&&t-w.t0<PLAY.wail.feed+4?1:0,1-Math.exp(-dt*.5));
+  sc.wailPull=lerp(sc.wailPull||0,w.active&&t-w.t0<PLAY.wail.feed+2?1:0,1-Math.exp(-dt*.35));
+  /* 혼자 울기 */
+  if(s.on&&!w.active&&t>=this.lastTouch+PLAY.solo.pause){
+   if(!s.queue.length&&t>=s.rest)this.composePhrase();
+   while(s.queue.length&&s.queue[0].at<=t){const n=s.queue.shift();if(!n.frog&&a.voices[n.i]&&a.voices[n.i].lv<5.6)this.autoStrike(n.i,n.s,true);}
+  }
+ };
+}
+
 window.addEventListener('DOMContentLoaded',()=>{window.__cryingBowl=new App();window.__cryingBowl.init();});
 
 </script>
