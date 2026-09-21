@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#111319"><meta name="description" content="CRYING BOWL — forged bowls and a scraping frog instrument.">
-<title>CRYING BOWL</title><!-- v0.5.0 | one accepted hit = one stage | visible first pose | no skipped key poses -->
-<meta name="crying-bowl-build" content="expression-fix-v05-20260922">
+<title>CRYING BOWL</title><!-- v0.9 | perf: precomputed tear strips, instanced rings, 24k audio, silent-voice gating | song mode, frog groove, mode strips -->
+<meta name="crying-bowl-build" content="perf-music-v09-20260922">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='%23b98a48'/%3E%3Cpath d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='%239f7338'/%3E%3Cellipse cx='32' cy='19' rx='27' ry='7' fill='%234b3217'/%3E%3Cellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='%23e9cc96' stroke-width='2.4'/%3E%3Cpath d='M13 36l12-4M51 36l-12-4' fill='none' stroke='%232a1c0e' stroke-width='4.6' stroke-linecap='round'/%3E%3Cpath d='M23 52c1.5-8 16.5-8 18 0c-4 3.6-14 3.6-18 0Z' fill='%232a1c0e'/%3E%3Cpath d='M17 38Q12.8 43.56 12.8 46.5A4.2 4.2 0 1 0 21.2 46.5Q21.2 43.56 17 38Z' fill='%23a9def5'/%3E%3Ccircle cx='15.5' cy='45.9' r='1.2' fill='%23fff'/%3E%3Cpath d='M47 38Q42.6 42.42 42.6 45.5A4.4 4.4 0 1 0 51.4 45.5Q51.4 42.42 47 38Z' fill='%23a9def5'/%3E%3Ccircle cx='45.5' cy='44.8' r='1.2' fill='%23fff'/%3E%3Cpath d='M9 51Q6 54.9 6 57A3 3 0 1 0 12 57Q12 54.9 9 51Z' fill='%23a9def5'/%3E%3C/svg%3E">
 <style>
 :root{color-scheme:dark;--gold:#c5a474;--muted:#9d9c9c;--line:rgba(208,177,128,.19)}
@@ -85,7 +85,7 @@ header .icon{width:38px;height:38px;min-width:38px}.toolbar{gap:7px!important}
 #showFrog svg{width:34px;height:34px}
 @media(max-width:700px){#modeSwitch{right:12px;bottom:max(12px,env(safe-area-inset-bottom))}#showFrog{width:52px;height:52px;border-radius:14px}#showFrog svg{width:32px;height:32px}#dock{width:min(260px,calc(100vw - 70px))!important;left:calc(50% - 18px)!important}}
 
-/* v0.8: 아래쪽 단추들 */#forceRow{gap:12px!important;align-items:center}#dampMini{width:62px;min-width:62px!important;height:62px;min-height:62px!important;padding:0!important;border-radius:50%!important;display:grid!important;place-items:center;letter-spacing:0!important;background:rgba(20,24,29,.9)!important;border:1.5px solid rgba(214,180,120,.75)!important;box-shadow:0 10px 30px #000a,0 0 0 4px rgba(214,180,120,.08)}#dampMini svg{width:46px;height:46px;display:block}#dampMini.active{border-color:#f0d9a8!important;box-shadow:0 0 22px rgba(240,200,120,.35),0 10px 30px #000a}#soloCry{display:grid!important;place-items:center;width:46px;min-width:46px!important;height:46px;min-height:46px!important;padding:0!important;border-radius:50%!important;background:rgba(18,21,25,.85)!important;border:1px solid rgba(194,166,117,.4)!important}#soloCry svg{width:34px;height:34px;display:block}#soloCry.active{border-color:#f0d9a8!important;background:rgba(90,66,32,.55)!important}#modeSwitch{display:flex!important;opacity:0;pointer-events:none;transition:opacity .6s;border:1px solid rgba(194,166,117,.42);border-radius:16px;background:rgba(18,21,25,.88);box-shadow:0 12px 32px #0008;overflow:hidden}.playing #modeSwitch{opacity:1;pointer-events:auto}#showBowls,#showFrog{display:grid!important;place-items:center;width:50px!important;height:50px!important;min-width:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;opacity:.36;filter:saturate(.45);transition:opacity .2s,background .2s}#showBowls.active,#showFrog.active{opacity:1;filter:none;background:rgba(125,94,48,.34)!important}#showBowls svg,#showFrog svg{width:36px!important;height:36px!important}#arcadeFace{position:fixed;z-index:6;left:calc(10px + env(safe-area-inset-left,0px));bottom:max(14px,env(safe-area-inset-bottom));width:36px;height:36px;padding:4px;line-height:0;opacity:.8;touch-action:manipulation}#arcadeFace svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 1.5px #fff) drop-shadow(1px 2px 1.5px #0006)}#arcadeFace:active svg{transform:scale(.88)}.bottom-left{left:58px!important}.appendix #dock{display:block!important}.appendix #dampMini{display:none!important}@media(max-width:700px){#showBowls,#showFrog{width:46px!important;height:46px!important}#showBowls svg,#showFrog svg{width:33px!important;height:33px!important}}</style>
+/* v0.9: 아래쪽 모드 스위치 (보울·개구리 전환과 같은 모양) */#forceRow{gap:12px!important;align-items:center;justify-content:center}.modeStrip{display:flex;border:1px solid rgba(194,166,117,.42);border-radius:16px;background:rgba(18,21,25,.88);box-shadow:0 12px 32px #0008;overflow:hidden}.modeStrip[hidden]{display:none!important}#forceRow .modeStrip button{display:grid!important;place-items:center;width:52px!important;height:52px!important;min-width:0!important;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;opacity:.36;filter:saturate(.45);transition:opacity .2s,background .2s}#forceRow .modeStrip button+button{border-left:1px solid rgba(194,166,117,.18)!important}#forceRow .modeStrip button.active{opacity:1;filter:none;background:rgba(125,94,48,.34)!important}#forceRow .modeStrip svg{width:38px!important;height:38px!important;display:block}@media(max-width:700px){#forceRow .modeStrip button{width:46px!important;height:46px!important}#forceRow .modeStrip svg{width:34px!important;height:34px!important}}#modeSwitch{display:flex!important;opacity:0;pointer-events:none;transition:opacity .6s;border:1px solid rgba(194,166,117,.42);border-radius:16px;background:rgba(18,21,25,.88);box-shadow:0 12px 32px #0008;overflow:hidden}.playing #modeSwitch{opacity:1;pointer-events:auto}#showBowls,#showFrog{display:grid!important;place-items:center;width:50px!important;height:50px!important;min-width:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;opacity:.36;filter:saturate(.45);transition:opacity .2s,background .2s}#showBowls.active,#showFrog.active{opacity:1;filter:none;background:rgba(125,94,48,.34)!important}#showBowls svg,#showFrog svg{width:36px!important;height:36px!important}#arcadeFace{position:fixed;z-index:6;left:calc(10px + env(safe-area-inset-left,0px));bottom:max(14px,env(safe-area-inset-bottom));width:36px;height:36px;padding:4px;line-height:0;opacity:.8;touch-action:manipulation}#arcadeFace svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 1.5px #fff) drop-shadow(1px 2px 1.5px #0006)}#arcadeFace:active svg{transform:scale(.88)}.bottom-left{left:58px!important}.appendix #dock{display:block!important}@media(max-width:700px){#showBowls,#showFrog{width:46px!important;height:46px!important}#showBowls svg,#showFrog svg{width:33px!important;height:33px!important}}</style>
 </head>
 <body>
 <canvas id="stage" tabindex="0" aria-label="다섯 크라잉볼과 세 아기보울. 볼을 두드리거나 숫자 1부터 8로 연주합니다. 배경을 끌면 바깥에서 둘러봅니다."></canvas><div id="vignette"></div>
@@ -101,7 +101,7 @@ header .icon{width:38px;height:38px;min-width:38px}.toolbar{gap:7px!important}
 <section id="intro"><h1>CRYING BOWL</h1><p></p><button id="start" disabled>준비 중</button><span class="quiet"></span></section>
 <div id="modeSwitch"><button id="showBowls" class="active" aria-pressed="true" aria-label="크라잉볼"></button><button id="showFrog" aria-pressed="false" aria-label="개구리"></button></div><div id="dock"><div id="viewNav"><button id="prevBowl" aria-label="왼쪽으로 돌아보기">‹</button><span id="focusLabel">01 <em>/ 08</em></span><button id="nextBowl" aria-label="오른쪽으로 돌아보기">›</button></div><div class="notes" role="group" aria-label="볼 연주">
 <button class="note" data-id="0" aria-label="큰 볼, A, 단축키 1">A<small>1</small></button><button class="note" data-id="1" aria-label="왼쪽 볼, C, 단축키 2">C<small>2</small></button><button class="note" data-id="2" aria-label="뒤쪽 왼쪽 볼, E, 단축키 3">E<small>3</small></button><button class="note" data-id="3" aria-label="오른쪽 볼, G, 단축키 4">G<small>4</small></button><button class="note" data-id="4" aria-label="뒤쪽 오른쪽 볼, D, 단축키 5">D<small>5</small></button>
-<span class="note-divider"></span><button class="note baby" data-id="5" aria-label="아기보울 A, 숫자 6">a<small>6</small></button><button class="note baby" data-id="6" aria-label="아기보울 C, 숫자 7">c<small>7</small></button><button class="note baby" data-id="7" aria-label="아기보울 E, 숫자 8">e<small>8</small></button></div><div id="forceRow"><span>타격</span><button data-force="0.40">약</button><button data-force="0.78" class="chosen">보통</button><button data-force="1.16">강</button><button id="soloCry" aria-label="혼자 울기" aria-pressed="false"></button><button id="dampMini" aria-label="다 같이 울기"></button></div><div id="quickControls"><label>음량 <input id="simpleVolume" type="range" min="0" max="180" value="110"></label><label>맥놀이 · 잔향 <input id="simpleSpace" type="range" min="0" max="100" value="58"></label></div><p id="hint">볼을 두드리세요</p></div><div id="appendixDock" hidden><button id="backBowl">← 크라잉볼</button><p>등을 왕복해서 긁어보세요. 멈춰도 막대는 잠깐 남아 있습니다.</p><button id="scrapeButton">한 번 길게 긁기</button></div>
+<span class="note-divider"></span><button class="note baby" data-id="5" aria-label="아기보울 A, 숫자 6">a<small>6</small></button><button class="note baby" data-id="6" aria-label="아기보울 C, 숫자 7">c<small>7</small></button><button class="note baby" data-id="7" aria-label="아기보울 E, 숫자 8">e<small>8</small></button></div><div id="forceRow"><span>타격</span><button data-force="0.40">약</button><button data-force="0.78" class="chosen">보통</button><button data-force="1.16">강</button><div id="bowlModes" class="modeStrip" role="group" aria-label="볼 자동 연주"><button data-mode="stop" aria-label="모두 멈춤" title="모두 멈춤"></button><button data-mode="solo" aria-label="혼자 울기" title="혼자 울기"></button><button data-mode="song" aria-label="곡 연주" title="곡 연주"></button><button data-mode="wail" aria-label="다 같이 울기" title="다 같이 울기"></button></div><div id="frogModes" class="modeStrip" hidden role="group" aria-label="개구리 자동 연주"><button data-mode="stop" aria-label="멈춤" title="멈춤"></button><button data-mode="solo" aria-label="혼자 긁기" title="혼자 긁기"></button><button data-mode="groove" aria-label="리듬" title="리듬"></button></div></div><div id="quickControls"><label>음량 <input id="simpleVolume" type="range" min="0" max="180" value="110"></label><label>맥놀이 · 잔향 <input id="simpleSpace" type="range" min="0" max="100" value="58"></label></div><p id="hint">볼을 두드리세요</p></div><div id="appendixDock" hidden><button id="backBowl">← 크라잉볼</button><p>등을 왕복해서 긁어보세요. 멈춰도 막대는 잠깐 남아 있습니다.</p><button id="scrapeButton">한 번 길게 긁기</button></div>
 <div class="bottom-left"><div id="resonance"><i></i><i></i><i></i></div><span></span></div>
 <aside id="settings" hidden aria-label="소리 조율"><button id="closeSettings" aria-label="닫기">×</button><h2>소리 조율</h2><div id="profileLabel">01 · A — 211806 원본</div>
 <label class="slider">전체 음량<input id="volume" type="range" min="0" max="180" value="110" aria-label="전체 음량"></label>
@@ -140,9 +140,9 @@ layout(location=10) in vec3 aCorrectN;
 layout(location=11) in mat4 aInstance;
 uniform float uInstanced;
 uniform mat4 uModel,uVP,uReflectVP;
-uniform float uTime,uEnergy,uPulse,uOpen,uExpression,uBlink,uMorph,uKind,uSeed;
+uniform float uTime,uEnergy,uPulse,uOpen,uExpression,uBlink,uMorph,uKind,uSeed,uMirror;
 out vec3 vWorld,vNormal,vLocal;
-out float vObjectScale;
+out float vObjectScale,vAlpha;
 out vec2 vUV;
 out vec4 vReflect;uniform float uCrumple;vec3 crumple(vec3 p,float c){float h=clamp(p.y/3.2,0.,1.),ang=atan(p.x,p.z),heave=pow(.5+.5*sin(uTime*16.3+uSeed),2.),squash=c*(.085+.075*heave);vec3 q=p;q.y*=1.-squash;float buckle=c*h*(.085*sin(3.*ang+1.3+.9*sin(uTime*1.7+uSeed))+.05*sin(5.*ang-uTime*2.3+uSeed*2.)+.03*heave*sin(7.*ang+uTime*5.1));q.xz*=(1.+squash*(.55+.9*sin(h*3.14159)))*(1.+buckle);float tw=c*(h-.25)*.20*sin(uTime*3.1+uSeed),cs=cos(tw),sn=sin(tw);q.xz=vec2(cs*q.x+sn*q.z,-sn*q.x+cs*q.z);q.z-=c*h*h*(.20+.12*heave);q.y-=c*h*h*.09*(.5+.5*cos(ang))*(.6+.4*heave);return q;}
 void main(){
@@ -167,11 +167,13 @@ void main(){
   p.x+=sign(p.x+0.0001)*crease*(.42+.58*sin(p.y*7.4+uSeed));
   p.y-=crease*(.30+.18*cos(abs(p.x)*8.0));
   p.z+=crease*(.22+.18*sin(abs(p.x)*6.2+p.y*2.1));
-  n=normalize(n+vec3(sin(ang*2.+uTime*43.3),sin(p.y*15.-uTime*54.),0.)*uEnergy*root*.018+vec3(sign(p.x+0.0001)*crease*1.8,-crease*1.3,crease));float cr=smoothstep(.22,1.,uCrumple);if(cr>.001){vec3 t1=normalize(cross(n,vec3(.31,.95,.07))),t2=cross(n,t1),ca=crumple(p,cr),cb=crumple(p+t1*.02,cr),cd=crumple(p+t2*.02,cr);n=normalize(cross(cb-ca,cd-ca));p=ca;}
+  n=normalize(n+vec3(sin(ang*2.+uTime*43.3),sin(p.y*15.-uTime*54.),0.)*uEnergy*root*.018+vec3(sign(p.x+0.0001)*crease*1.8,-crease*1.3,crease));float cr=smoothstep(.22,1.,uCrumple);if(cr>.001){if(uMirror>.5){p=crumple(p,cr);}else{vec3 t1=normalize(cross(n,vec3(.31,.95,.07))),t2=cross(n,t1),ca=crumple(p,cr),cb=crumple(p+t1*.02,cr),cd=crumple(p+t2*.02,cr);n=normalize(cross(cb-ca,cd-ca));p=ca;}}
  }
- mat4 model=uModel; if(uInstanced>.5)model=uModel*aInstance;
+ mat4 model=uModel;vAlpha=1.;if(uInstanced>.5){mat4 inst=aInstance;vAlpha=inst[3][3];inst[3][3]=1.;model=uModel*inst;}
  vWorld=(model*vec4(p,1)).xyz;
- vNormal=normalize(transpose(inverse(mat3(model)))*n);
+ // normal matrix without a per-vertex inverse: for rotation*scale matrices, R*S^-1 == mat3(model) applied to n/scale^2
+ vec3 sc2=max(vec3(dot(model[0].xyz,model[0].xyz),dot(model[1].xyz,model[1].xyz),dot(model[2].xyz,model[2].xyz)),vec3(1e-8));
+ vNormal=normalize(mat3(model)*(n/sc2));
  vObjectScale=length(uModel[0].xyz);
  vReflect=uReflectVP*vec4(vWorld,1);
  gl_Position=uVP*vec4(vWorld,1);
@@ -179,7 +181,7 @@ void main(){
 const fragmentSource=`#version 300 es
 precision highp float;
 in vec3 vWorld,vNormal,vLocal;
-in float vObjectScale;
+in float vObjectScale,vAlpha;
 in vec2 vUV;
 in vec4 vReflect;
 out vec4 outColor;
@@ -212,6 +214,13 @@ vec3 env(vec3 r,float rough){
 }
 vec3 tonemap(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
 void main(){
+ if(uKind>2.5&&uKind<3.5){
+  // glow rings and splashes: unlit, no noise or environment work
+  float dfog=1.-exp(-max(0.,length(vWorld.xz)-10.)*.058);
+  vec3 lg=mix(uColor*uGlow,vec3(.0055,.0075,.012),clamp(dfog,0.,.84));
+  vec3 cg=pow(tonemap(lg*.88),vec3(1./2.2));if(uMirror>.5)cg*=.78;
+  outColor=vec4(cg,uAlpha*vAlpha);return;
+ }
  vec3 N=normalize(vNormal),V=normalize(uEye-vWorld),albedo=uColor;
  if(!gl_FrontFacing)N=-N;
  float rough=uRough,metal=uMetal;
@@ -299,7 +308,7 @@ void main(){
   light=mix(vec3(.095,.039,.009)*(.27+nl*.48),vec3(.0006,.00024,.0001),deep);
   light+=vec3(.11,.069,.022)*spec*(1.-deep)*.5;
  }
- float alpha=uAlpha;
+ float alpha=uAlpha*vAlpha;
  if(uKind>17.5&&uKind<18.5){float across=1.-pow(abs(vUV.x*2.-1.),2.4),fallen=max(0.,vUV.y-1.),isFall=step(.0001,fallen),run=vUV.y*7.-uTime*(2.4+1.6*uGlow),streak=.62*noise(vec3(vUV.x*4.+uSeed,run,uSeed*1.3))+.38*noise(vec3(vUV.x*11.-uSeed,run*2.6,2.7)),wb=streak*.045;vec3 sx=dFdx(vWorld),sy=dFdy(vWorld),q1=cross(sy,N),q2=cross(N,sx);float sdet=dot(sx,q1);vec3 Nw=normalize(abs(sdet)*N-sign(sdet)*(dFdx(wb)*q1+dFdy(wb)*q2));float Fw=pow(1.-max(dot(Nw,V),0.),3.),glint=pow(max(dot(Nw,H),0.),48.)+.7*pow(max(dot(Nw,H2),0.),36.);light=uColor+env(reflect(-V,Nw),.06)*(.02+.25*Fw)+vec3(1.,.93,.80)*glint*2.8+vec3(.22,.23,.25)*pow(streak,3.)*(1.-isFall)+vec3(.50,.53,.57)*pow(streak,1.8)*isFall;float torn=smoothstep(.25,.95,streak+.62-fallen*.95);alpha=uAlpha*across*mix(.40+.20*streak+.25*Fw+glint*1.2,torn*(.50+.40*streak+glint*1.2),isFall)*(1.-smoothstep(.88,1.,fallen));}if(uKind>12.5&&uKind<13.5){
   float F=pow(1.-max(dot(N,V),0.),4.);
   float ndv=max(dot(N,V),0.),caustic=smoothstep(.30,.95,.5-.5*dot(N,L))*(.35+.65*ndv);light=mix(vec3(.030,.033,.040),vec3(.27,.28,.30),caustic)+env(reflect(-V,N),.05)*(.04+.65*F)+vec3(1.,.97,.9)*pow(max(dot(N,H),0.),170.)*3.0;
@@ -320,8 +329,7 @@ void main(){
   for(int i=0;i<8;i++){
    float d=length(vWorld.xz-uRipples[i].xy);
    float e=uRipples[i].z;
-   float wave=pow(max(0.,sin(d*12.5-uTime*4.4)),36.)*exp(-d*.67)*e;
-   ripple+=wave*.105;
+   if(e>.0035){float wave=pow(max(0.,sin(d*12.5-uTime*4.4)),36.)*exp(-d*.67)*e;ripple+=wave*.105;}
    shadow+=exp(-d*d/(i==0?3.8:1.3))*.65;
   }
   light=vec3(.006,.009,.014)*(grain+.45)+pow(refl,vec3(2.2))*(.40+fres*.28)*(1.-clamp(shadow,0.,.74));
@@ -382,12 +390,17 @@ class Renderer{
     for(let j=0;j<2;j++){let loc=3+k*2+j;g.enableVertexAttribArray(loc);g.vertexAttribPointer(loc,3,g.FLOAT,false,24,j*12);}
    }
   }
-  g.bindBuffer(g.ELEMENT_ARRAY_BUFFER,m.ibo);g.bufferData(g.ELEMENT_ARRAY_BUFFER,new Uint32Array(data.indices),g.STATIC_DRAW);g.bindVertexArray(null);return m;
+  g.bindBuffer(g.ELEMENT_ARRAY_BUFFER,m.ibo);g.bufferData(g.ELEMENT_ARRAY_BUFFER,new Uint32Array(data.indices),g.STATIC_DRAW);g.bindVertexArray(null);this._vao=null;return m;
  }
  updateMesh(m){const g=this.gl;g.bindBuffer(g.ARRAY_BUFFER,m.vbo);g.bufferSubData(g.ARRAY_BUFFER,0,m.verts);}
- u(name,v){let g=this.gl,l=this.uniforms[name];if(l===undefined)return;if(typeof v==='number')g.uniform1f(l,v);else if(v.length===16)g.uniformMatrix4fv(l,false,v);else if(v.length===3)g.uniform3fv(l,v);else if(v.length===32)g.uniform4fv(l,v);}
- begin(camera,time,ripples,mirror=false){let g=this.gl;g.bindFramebuffer(g.FRAMEBUFFER,mirror?this.fbo:null);g.viewport(0,0,mirror?this.rw:this.width,mirror?this.rh:this.height);g.clear(g.COLOR_BUFFER_BIT|g.DEPTH_BUFFER_BIT);g.useProgram(this.program);this.u('uVP',mirror?camera.rvp:camera.vp);this.u('uReflectVP',camera.rvp);this.u('uEye',mirror?camera.reye:camera.eye);this.u('uTime',time);this.u('uRipples',ripples);this.u('uMirror',mirror?1:0);g.activeTexture(g.TEXTURE1);g.bindTexture(g.TEXTURE_2D,mirror?this.blank:this.reflection);g.uniform1i(this.uniforms.uReflection,1);this.draws=0;this.triangles=0;}
- draw(obj){if(obj.visible===false)return;let g=this.gl,mat=obj.mat||{};this.u('uInstanced',obj.instances!==undefined?1:0);this.u('uModel',obj.model||M.model(obj.pos,obj.scale,obj.rot));this.u('uKind',mat.kind||0);this.u('uColor',mat.color||[.55,.31,.11]);this.u('uMetal',mat.metal??.8);this.u('uRough',mat.rough??.32);this.u('uAlpha',mat.alpha??1);this.u('uGlow',mat.glow||0);this.u('uEnergy',obj.energy||0);this.u('uPulse',obj.pulse||0);this.u('uOpen',obj.open||0);this.u('uExpression',obj.expression||0);this.u('uBlink',obj.blink||0);this.u('uCrumple',obj.crumple||0);this.u('uMorph',obj.mesh.morph?1:0);this.u('uSeed',obj.seed||0);if(mat.alpha<1){g.enable(g.BLEND);g.blendFunc(g.SRC_ALPHA,mat.add?g.ONE:g.ONE_MINUS_SRC_ALPHA);g.depthMask(false);}else{g.disable(g.BLEND);g.depthMask(true);}g.bindVertexArray(obj.mesh.vao);if(obj.instances!==undefined)g.drawElementsInstanced(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0,obj.instances);else g.drawElements(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0);g.depthMask(true);this.draws++;this.triangles+=obj.mesh.count/3;}
+ u(name,v){let g=this.gl,l=this.uniforms[name];if(l===undefined)return;const c=this.ucache||(this.ucache={});
+  if(typeof v==='number'){if(c[name]===v)return;c[name]=v;g.uniform1f(l,v);return;}
+  const n=v.length,prev=c[name];
+  if(prev&&prev.length===n){let same=true;for(let i=0;i<n;i++)if(prev[i]!==v[i]){same=false;break;}if(same)return;for(let i=0;i<n;i++)prev[i]=v[i];}else c[name]=Float32Array.from(v);
+  if(n===16)g.uniformMatrix4fv(l,false,v);else if(n===3)g.uniform3fv(l,v);else if(n===32)g.uniform4fv(l,v);}
+ blendState(on,add){const g=this.gl;if(this._blend!==on){this._blend=on;if(on)g.enable(g.BLEND);else g.disable(g.BLEND);}if(on&&this._add!==add){this._add=add;g.blendFunc(g.SRC_ALPHA,add?g.ONE:g.ONE_MINUS_SRC_ALPHA);}if(this._depth!==!on){this._depth=!on;g.depthMask(!on);}}
+ begin(camera,time,ripples,mirror=false){let g=this.gl;g.bindFramebuffer(g.FRAMEBUFFER,mirror?this.fbo:null);g.viewport(0,0,mirror?this.rw:this.width,mirror?this.rh:this.height);g.clear(g.COLOR_BUFFER_BIT|g.DEPTH_BUFFER_BIT);g.useProgram(this.program);this.u('uVP',mirror?camera.rvp:camera.vp);this.u('uReflectVP',camera.rvp);this.u('uEye',mirror?camera.reye:camera.eye);this.u('uTime',time);this.u('uRipples',ripples);this.u('uMirror',mirror?1:0);g.activeTexture(g.TEXTURE1);g.bindTexture(g.TEXTURE_2D,mirror?this.blank:this.reflection);g.uniform1i(this.uniforms.uReflection,1);this.draws=0;this.triangles=0;this._blend=undefined;this._add=undefined;this._depth=undefined;this._vao=null;g.depthMask(true);g.disable(g.BLEND);}
+ draw(obj){if(obj.visible===false)return;let g=this.gl,mat=obj.mat||{};this.u('uInstanced',obj.instances!==undefined?1:0);this.u('uModel',obj.model||M.model(obj.pos,obj.scale,obj.rot));this.u('uKind',mat.kind||0);this.u('uColor',mat.color||[.55,.31,.11]);this.u('uMetal',mat.metal??.8);this.u('uRough',mat.rough??.32);this.u('uAlpha',mat.alpha??1);this.u('uGlow',mat.glow||0);this.u('uEnergy',obj.energy||0);this.u('uPulse',obj.pulse||0);this.u('uOpen',obj.open||0);this.u('uExpression',obj.expression||0);this.u('uBlink',obj.blink||0);this.u('uCrumple',obj.crumple||0);this.u('uMorph',obj.mesh.morph?1:0);this.u('uSeed',obj.seed||0);this.blendState(mat.alpha<1,!!mat.add);if(this._vao!==obj.mesh.vao){this._vao=obj.mesh.vao;g.bindVertexArray(obj.mesh.vao);}if(obj.instances!==undefined)g.drawElementsInstanced(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0,obj.instances);else g.drawElements(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0);this.draws++;this.triangles+=obj.mesh.count/3;}
 }
 function gridMesh(nu,nv,fn){let v=[],ix=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){let u=i/nu,t=j/nv,p=fn(u,t);let e=.0003,pu=fn(Math.min(1,u+e),t),mu=fn(Math.max(0,u-e),t),pv=fn(u,Math.min(1,t+e)),mv=fn(u,Math.max(0,t-e));let n=V.norm(V.cross(V.sub(pu,mu),V.sub(pv,mv)));v.push(...p,...n,u,t);}for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){let a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;ix.push(a,b,c,b,d,c);}return {vertices:v,indices:ix};}
 function lathe(profile,n=64){return gridMesh(n,profile.length-1,(u,t)=>{let k=t*(profile.length-1),a=Math.min(profile.length-2,Math.floor(k)),f=k-a,r=lerp(profile[a][0],profile[a+1][0],f),y=lerp(profile[a][1],profile[a+1][1],f);return [Math.sin(u*TAU)*r,y,Math.cos(u*TAU)*r]});}
@@ -643,7 +656,9 @@ function sampleCryPose(level){
  return out;
 }
 class CryStageSequence{
- constructor(){this.reset();}
+ constructor(){this.cap=CRY_MAX;this.reset();}
+ /* 연주 모드에서는 단계가 1 위로 안 올라간다 (세지면 소리가 서로 안 맞음) */
+ setCap(c){this.cap=c;if(this.target>c){this.target=c;if(this.move&&this.move.to>c)this.move=null;this.dwell=0;}}
  reset(){
   this.target=0;this.value=0;this.completed=0;this.accepted=0;
   this.queue=[];this.move=null;this.dwell=0;this.quiet=0;this.lastTime=null;
@@ -661,7 +676,7 @@ class CryStageSequence{
   while(this.queue.length&&this.queue[0]<=now+1e-7){this.queue.shift();incoming++;}
   if(incoming){
    this.accepted+=incoming;
-   this.target=Math.min(CRY_MAX,this.target+incoming);
+   this.target=Math.min(this.cap,this.target+incoming);
    this.quiet=3.2;
    // A new strike during recovery reverses from the current pose, not a
    // rounded display value. It still cannot add more than one stage per hit.
@@ -720,6 +735,7 @@ class BowlVoice{
  }
  lfo(hz,depth,param){let c=this.ctx,o=c.createOscillator(),g=c.createGain();o.frequency.value=hz;g.gain.value=depth;o.connect(g);g.connect(param);o.start();this.mod.push({o,g,depth,hz,param});}
  hit(strength=.75,when=this.ctx.currentTime){
+  if(this.gated)this.wake();
   this.strength=Math.min(1.22,Math.max(strength,this.level*.65+strength*.62));
   this.climb(strength,when);this.last=when;
   const k=this.k||0;this.glottal.detune.cancelScheduledValues(when);
@@ -727,12 +743,19 @@ class BowlVoice{
   this.glottal.detune.exponentialRampToValueAtTime(1,when+.7);
  }
  energy(t){let age=t-this.last;if(age<0)return this.level;return clamp(this.strength*(1-Math.exp(-age*60))*Math.exp(-age/(5.6+this.id*.15))+this.rub*.72,0,1.2)}
- tick(t){let e=this.energy(t),age=t-this.last;this.level=e;const k=this.mood(t,e);let swell=.64+.36*(.5+.5*Math.sin(t*(1.24+this.id*.12)+this.id));this.output.gain.setTargetAtTime(e*(.82+swell*.18)*(1-.24*k),t,.016);this.vocal.gain.setTargetAtTime((.015+this.cryNow(t)*.165)*(.65+.35*clamp(age*2.5)),t,.04);this.metal.gain.setTargetAtTime(.53-this.engine.cry*.09,t,.1);for(let m of this.mod){let depth=m.depth*this.engine.waves*this.sway(m,k);if(m.param===this.throb.gain)depth*=Math.min(1,.68/(.215*this.engine.waves*(1+1.7*k)||1));m.g.gain.setTargetAtTime(depth,t,.1);}this.analyser.getFloatTimeDomainData(this.data);let rms=0;for(let x of this.data)rms+=x*x;this.rms=Math.sqrt(rms/128);return e;}
+ tick(t){let e=this.energy(t),age=t-this.last;this.level=e;const k=this.mood(t,e);
+  /* 소리가 0인 볼은 그래프에서 떼어 둔다. 출력에 안 이어진 노드는 브라우저가 계산하지 않는다 */
+  const active=e>.003||this.rub>.001||this.crySequence.queue.length>0||t<this.last+.5;
+  if(active){if(this.gated)this.wake();}else if(!this.gated&&t-this.last>1.5&&t-(this.dampAt??-10)>.6)this.sleep();
+  if(this.gated){this.rms=0;return e;}
+  let swell=.64+.36*(.5+.5*Math.sin(t*(1.24+this.id*.12)+this.id));auto(this.output.gain,e*(.82+swell*.18)*(1-.24*k),t,.016);auto(this.vocal.gain,(.015+this.cryNow(t)*.165)*(.65+.35*clamp(age*2.5)),t,.04);auto(this.metal.gain,.53-this.engine.cry*.09,t,.1);for(let m of this.mod){let depth=m.depth*this.engine.waves*this.sway(m,k);if(m.param===this.throb.gain)depth*=Math.min(1,.68/(.215*this.engine.waves*(1+1.7*k)||1));auto(m.g.gain,depth,t,.1);}this.analyser.getFloatTimeDomainData(this.data);let rms=0;for(let x of this.data)rms+=x*x;this.rms=Math.sqrt(rms/128);return e;}
+ wake(){if(!this.gated)return;this.gated=false;this.balance.connect(this.engine.bus);this.balance.connect(this.send);this.pan.connect(this.analyser);}
+ sleep(){if(this.gated)return;this.gated=true;this.balance.disconnect();this.pan.disconnect(this.analyser);}
  damp(){
   this.strength=0;this.rub=0;this.last=-100;this.level=0;
   this.crySequence.reset();this.stage=0;this.lv=0;this.k=0;
-  this.crackAt=Infinity;this.crackUntil=0;
-  this.output.gain.setTargetAtTime(0,this.ctx.currentTime,.08);
+  this.crackAt=Infinity;this.crackUntil=0;this.dampAt=this.ctx.currentTime;
+  auto(this.output.gain,0,this.ctx.currentTime,.08,0);
  }
  /* One real strike, one reserved stage. No force/rapid bonus, and no
   * Math.ceil(displayedLevel) feedback into the strike counter. */
@@ -764,12 +787,20 @@ class BowlVoice{
  sway(m,k){return m.param===this.throb.gain?1+1.7*k:m.param===this.glottal.detune?1+1.6*k:1+.45*k;}
  cryNow(t){return this.engine.cry*(.85+.30*(this.k||0))*(t<(this.crackUntil||0)?.42:1);}
 }
+/* 자동화는 값이 실제로 바뀔 때만 보낸다 (매 틱 같은 값을 다시 보내던 141회를 줄임) */
+function auto(param,value,t,tc,eps=.0006){if(!param)return;if(param._sent!==undefined&&Math.abs(param._sent-value)<eps)return;param._sent=value;param.setTargetAtTime(value,t,tc);}
+/* 이 작품은 5.4kHz 로우패스가 걸려 있어 24kHz 컨텍스트로도 소리가 같다. 오디오 계산량은 절반. 모바일은 버퍼를 더 준다. */
+function createContext(C){
+ const mobile=Math.min(innerWidth,innerHeight)<760;
+ for(const opts of [{latencyHint:mobile?'playback':'interactive',sampleRate:24000},{latencyHint:'interactive',sampleRate:24000},{latencyHint:'interactive'}]){try{const c=new C(opts);if(c)return c;}catch(_){}}
+ return new C();
+}
 class AudioEngine{
  constructor(){this.ctx=null;this.voices=[];this.volume=1.45;this.cry=.78;this.waves=.92;this.room=.44;this.harmony=true;this.muted=false;this.ready=false;}
  async start(extCtx){
   if(this.ctx){await this.ctx.resume();return;}
   const C=window.AudioContext||window.webkitAudioContext;if(!C)throw new Error('이 브라우저는 Web Audio를 지원하지 않습니다.');
-  let c=this.ctx=extCtx||new C({latencyHint:'interactive'});if(!extCtx)await c.resume();
+  let c=this.ctx=extCtx||createContext(C);if(!extCtx)await c.resume();
   this.bus=c.createGain();this.bus.gain.value=1;this.master=c.createGain();this.master.gain.value=this.volume;
   this.lowcut=c.createBiquadFilter();this.lowcut.type='highpass';this.lowcut.frequency.value=40;
   this.highcut=c.createBiquadFilter();this.highcut.type='lowpass';this.highcut.frequency.value=5400;
@@ -785,7 +816,8 @@ class AudioEngine{
   for(let f of [55,82.406889,130.812783,195.997718]){let o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.value=f>100?.013:.019;o.connect(g);g.connect(this.pad);o.start();}
   this.scraper=new ScrapeVoice(this);this.buildDrone();this.ready=true;
  }
- tick(){if(!this.ready)return;let t=this.ctx.currentTime,sum=0;for(let v of this.voices)sum+=v.tick(t);this.pad.gain.setTargetAtTime(this.harmony?Math.min(.72,sum*.20):0,t,.65);this.master.gain.setTargetAtTime(this.muted?0:this.volume,t,.05);this.wet.gain.setTargetAtTime(this.room,t,.2);this.tickDrone(sum);}
+ tick(){if(!this.ready)return;let t=this.ctx.currentTime,sum=0;for(let v of this.voices)sum+=v.tick(t);auto(this.pad.gain,this.harmony?Math.min(.72,sum*.20):0,t,.65,.002);auto(this.master.gain,this.muted?0:this.volume,t,.05);auto(this.wet.gain,this.room,t,.2);this.tickDrone(sum);}
+ lag(){const c=this.ctx;if(!c)return 0;return Math.min(.12,Math.max(0,c.outputLatency||c.baseLatency||0));}
  hit(i,strength,delay=0){if(!this.ready)return;this.voices[i].hit(strength,this.ctx.currentTime+delay);let c=this.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=this.knock;f.type='lowpass';f.frequency.value=1400+i*180;g.gain.value=.043*strength;s.connect(f);f.connect(g);g.connect(this.bus);s.onended=()=>{s.disconnect();f.disconnect();g.disconnect();};s.start(c.currentTime+delay);}
  damp(){for(let v of this.voices)v.damp();}
 }
@@ -839,13 +871,14 @@ class ReferenceVoice extends BowlVoice{
  }
  tick(t){
   const e=super.tick(t),on=this.id>0&&!this.engine.original,age=Math.max(0,t-this.last);
+  if(this.gated)return e;
   const ref=on?(this.engine.reference??.68):0;
-  this.reference.gain.setTargetAtTime(ref*.90,t,.06);
-  for(const p of this.refParts)p.gate.gain.setTargetAtTime(.18+.82*Math.exp(-age/p.decay),t,.05);
+  auto(this.reference.gain,ref*.90,t,.06);
+  for(const p of this.refParts)auto(p.gate.gain,.18+.82*Math.exp(-age/p.decay),t,.05);
   // Preserve the original partials below, adding a restrained reference shell.
-  if(on)this.metal.gain.setTargetAtTime((.53-this.engine.cry*.09)*(1-.19*ref),t,.1);
+  if(on)auto(this.metal.gain,(.53-this.engine.cry*.09)*(1-.19*ref),t,.1);
   const k=this.k||0;
-  this.sob.gain.setTargetAtTime(this.engine.original?0:(this.engine.fracture??.48)*smooth(.15,.95,k)*.22,t,.08);
+  auto(this.sob.gain,this.engine.original?0:(this.engine.fracture??.48)*smooth(.15,.95,k)*.22,t,.08);
   return e;
  }
  damp(){super.damp();this.carry=0;this.sob?.gain.setTargetAtTime(0,this.ctx.currentTime,.06);}
@@ -882,6 +915,9 @@ class ScrapeVoice{
   s.onended=()=>{s.disconnect();f.disconnect();g.disconnect();this.live=Math.max(0,this.live-1);};s.start(t);
  }
  stroke(force=.68){for(let k=0;k<14;k++)this.tooth(force,k*(.049-force*.019));}
+ /* 리듬용: 이빨 몇 개를 몇 초에 걸쳐 (긴 긁기는 끝으로 갈수록 조금 빨라짐), 그리고 목을 울리는 '크륵' */
+ strum(force=.6,teeth=4,dur=.08,delay=0){for(let k=0;k<teeth;k++){const f=teeth>1?k/(teeth-1):0;this.tooth(force*(.85+.3*f),delay+dur*Math.pow(f,1.12));}}
+ knock(strength=.7,delay=0){if(!this.engine.ready||this.engine.muted)return;const c=this.ctx,t=c.currentTime+delay,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();s.buffer=this.buffers[1];s.playbackRate.value=.30+.05*Math.random();f.type='lowpass';f.frequency.value=480+260*strength;f.Q.value=1.4;g.gain.value=1.6*strength;s.connect(f);f.connect(g);g.connect(this.out);s.onended=()=>{s.disconnect();f.disconnect();g.disconnect();};s.start(t);}
  mood(k){if(Math.abs(k-(this.kSet??-1))<.01)return;this.k=this.kSet=k;const t=this.ctx.currentTime;this.throat.gain.setTargetAtTime(2.5+7*k,t,.1);this.croak.gain.setTargetAtTime(.62*smooth(0,.45,k),t,.1);this.vowels[0].frequency.setTargetAtTime(560+230*k,t,.1);this.vowels[1].frequency.setTargetAtTime(1180+380*k,t,.1);}
 }
 AudioEngine.prototype.uiTing=function(kind='open'){
@@ -906,7 +942,7 @@ class BabyVoice extends BowlVoice{
  }
  hit(s=.7,when=this.ctx.currentTime){const before=this.energy(when);super.hit(s,when);this.carry=before;}
  energy(t){const age=t-this.last;if(age<0)return this.level;return clamp(this.strength*(1-Math.exp(-age*95))*Math.exp(-age/(2.65-(this.id-5)*.3))+this.rub*.6+(this.carry||0)*Math.exp(-age*40),0,1.2);}
- tick(t){const e=super.tick(t),age=Math.max(0,t-this.last);this.output.gain.setTargetAtTime(e*.65*(1-.24*(this.k||0)),t,.012);this.metal.gain.setTargetAtTime(.63,t,.06);this.vocal.gain.setTargetAtTime((.016+this.cryNow(t)*.082)*(.65+.35*clamp(age*6)),t,.03);return e;}
+ tick(t){const e=super.tick(t),age=Math.max(0,t-this.last);if(this.gated)return e;auto(this.output.gain,e*.65*(1-.24*(this.k||0)),t,.012);auto(this.metal.gain,.63,t,.06);auto(this.vocal.gain,(.016+this.cryNow(t)*.082)*(.65+.35*clamp(age*6)),t,.03);return e;}
  damp(){super.damp();this.carry=0;}
 }
 
@@ -958,7 +994,7 @@ BowlVoice.prototype.buildGrit=function(){
  const c=this.ctx,y=this.cry,n=2049,curve=new Float32Array(n);
  for(let i=0;i<n;i++){const x=i/(n-1)*2-1;curve[i]=(Math.tanh(3.4*x+.28)-Math.tanh(.28))/1.04;}
  y.drive=c.createGain();y.drive.gain.value=0;y.shaper=c.createWaveShaper();y.shaper.curve=curve;y.shaper.oversample='2x';y.grit=c.createGain();y.grit.gain.value=0;
- this.output.connect(y.drive);y.drive.connect(y.shaper);y.shaper.connect(y.grit);y.grit.connect(this.throb);
+ this.output.connect(y.drive);y.gritOn=true;y.gritOff=Infinity;y.drive.connect(y.shaper);y.shaper.connect(y.grit);y.grit.connect(this.throb);
 };
 BowlVoice.prototype.cryStage=function(t){
  const y=this.cry,lv=this.engine.original?Math.min(this.lv,1):this.lv;
@@ -970,12 +1006,12 @@ BowlVoice.prototype.cryStage=function(t){
  y.breath.gain.setTargetAtTime(s.breath*CRY_MIX.breath,t,.12);
  const open=[.62,.20,.12];this.formants.forEach((f,i)=>f.frequency.setTargetAtTime(y.f0[i]*(1+open[i]*s.vowel),t,.12));
  if(s.grit>.004&&!y.shaper)this.buildGrit();
- if(y.shaper){y.drive.gain.setTargetAtTime(s.grit*CRY_MIX.drive,t,.07);y.grit.gain.setTargetAtTime(s.grit*CRY_MIX.grit,t,.07);}
+ if(y.shaper){const on=s.grit>.004;if(on&&!y.gritOn){y.gritOn=true;this.output.connect(y.drive);}y.drive.gain.setTargetAtTime(s.grit*CRY_MIX.drive,t,.07);y.grit.gain.setTargetAtTime(s.grit*CRY_MIX.grit,t,.07);y.gritOff=on?Infinity:t+.6;}
 };
 const CRY_MIX={bright:.40,oct:.40,breath:.02,drive:2.5,grit:.11};
 {
  const tick0=BowlVoice.prototype.tick,hit0=BowlVoice.prototype.hit;
- BowlVoice.prototype.tick=function(t){const e=tick0.call(this,t);if(!this.cry)this.buildCry();this.cryStage(t);return e;};
+ BowlVoice.prototype.tick=function(t){const e=tick0.call(this,t);if(!this.cry)this.buildCry();this.cryStage(t);const y=this.cry;if(y.gritOn&&t>y.gritOff){this.output.disconnect(y.drive);y.gritOn=false;}return e;};
  BowlVoice.prototype.hit=function(strength=.75,when=this.ctx.currentTime){
   hit0.call(this,strength,when);
   if(!this.cry||this.engine.original)return;
@@ -1025,8 +1061,10 @@ Renderer.prototype.makeInstances=function(data,capacity,mat){
  const g=this.gl,mesh=this.mesh(data),buffer=g.createBuffer();
  g.bindVertexArray(mesh.vao);g.bindBuffer(g.ARRAY_BUFFER,buffer);g.bufferData(g.ARRAY_BUFFER,capacity*64,g.DYNAMIC_DRAW);
  for(let j=0;j<4;j++){g.enableVertexAttribArray(11+j);g.vertexAttribPointer(11+j,4,g.FLOAT,false,64,j*16);g.vertexAttribDivisor(11+j,1);}
- g.bindVertexArray(null);return {mesh,mat,buffer,capacity,instances:0,model:M.identity(),matrices:new Float32Array(capacity*16)};
+ g.bindVertexArray(null);this._vao=null;return {mesh,mat,buffer,capacity,instances:0,model:M.identity(),matrices:new Float32Array(capacity*16)};
 };
+/* Instance matrices carry their own alpha in element 15 (restored to 1 in the vertex shader). */
+Renderer.prototype.instanceRing=function(batch,i,pos,scale,alpha){const m=batch.matrices,o=i*16;m[o]=scale;m[o+1]=0;m[o+2]=0;m[o+3]=0;m[o+4]=0;m[o+5]=0;m[o+6]=scale;m[o+7]=0;m[o+8]=0;m[o+9]=-scale;m[o+10]=0;m[o+11]=0;m[o+12]=pos[0];m[o+13]=pos[1];m[o+14]=pos[2];m[o+15]=alpha;};
 Renderer.prototype.uploadInstances=function(obj,count){obj.instances=count;const g=this.gl;g.bindBuffer(g.ARRAY_BUFFER,obj.buffer);if(count)g.bufferSubData(g.ARRAY_BUFFER,0,obj.matrices.subarray(0,count*16));};
 function transformMorph(data,m){
  const base=transformData(data,m),out={...base,targets:[]};
@@ -1073,12 +1111,12 @@ class TearFlow{
   for(let j=0;j<nr;j++)for(let i=0;i<nc;i++)verts.push(0,0,0,0,0,1,i/FLOW.cols,j<=FLOW.rows?j/FLOW.rows:1+(j-FLOW.rows)/FLOW.fall);
   for(let j=0;j<nr-1;j++)for(let i=0;i<FLOW.cols;i++){const a=j*nc+i,c=a+nc;indices.push(a,a+1,c,a+1,c+1,c);}
   /* 0,1 = 왼쪽·오른쪽 눈물, 2,3 = 왼쪽·오른쪽 콧물 */
-  for(const snot of [0,1])for(const side of [-1,1])this.strips.push({snot,side,key:'',age:0,ready:false,amount:0,splash:0,local:new Float32Array(cache),world:new Float32Array(cache),normal:new Float32Array((FLOW.rows+1)*3),endVel:[0,-1,0],mesh:R.mesh({vertices:verts,indices},true),mat:{kind:18,color:[.012,.014,.018],metal:0,rough:.05,alpha:0,glow:0},model:M.identity(),seed:side*1.7+snot*3.1+(owner.id||0)*.61});
+  for(const snot of [0,1])for(const side of [-1,1]){const s={snot,side,key:'',age:0,ready:false,amount:0,splash:0,local:new Float32Array(cache),world:new Float32Array(cache),normal:new Float32Array((FLOW.rows+1)*3),endVel:[0,-1,0],mesh:R.mesh({vertices:verts,indices},true),mat:{kind:18,color:[.012,.014,.018],metal:0,rough:.05,alpha:0,glow:0},model:M.identity(),seed:side*1.7+snot*3.1+(owner.id||0)*.61};owner.buildStripPoses(s,cache);this.strips.push(s);}
  }
  draw(R){for(const s of this.strips)if(s.mat.alpha>.01)R.draw(s);}
  /* 물길 위의 한 점 (u: 위에서 아래로 0~1, across: 왼쪽에서 오른쪽으로 -1~1) */
- at(s,u,across,lift){
-  const nc=FLOW.cols+1,rf=clamp(u)*FLOW.rows,j=Math.min(FLOW.rows-1,Math.floor(rf)),fj=rf-j,cf=(clamp(across,-1,1)+1)/2*FLOW.cols,i=Math.min(FLOW.cols-1,Math.floor(cf)),fi=cf-i,w=s.world,out=[0,0,0];
+ at(s,u,across,lift,out=[0,0,0]){
+  const nc=FLOW.cols+1,rf=clamp(u)*FLOW.rows,j=Math.min(FLOW.rows-1,Math.floor(rf)),fj=rf-j,cf=(clamp(across,-1,1)+1)/2*FLOW.cols,i=Math.min(FLOW.cols-1,Math.floor(cf)),fi=cf-i,w=s.world;
   for(let k=0;k<3;k++){const a=lerp(w[(j*nc+i)*3+k],w[(j*nc+i+1)*3+k],fi),b=lerp(w[((j+1)*nc+i)*3+k],w[((j+1)*nc+i+1)*3+k],fi);out[k]=lerp(a,b,fj)+s.normal[j*3+k]*lift;}
   return out;
  }
@@ -1087,16 +1125,13 @@ class TearFlow{
   this.scene.spawnDrop({flow:this,strip:s,across,r:FLOW.size(tf)*(.75+.5*Math.random())*this.owner.scale,well:.08+.10*Math.random(),slide:lerp(1.15,.5,tf)*(.8+.4*Math.random()),scale:this.owner.scale});
  }
  update(t,dt,tears,snot){
-  const o=this.owner,sc=o.scale,root=Math.sqrt(sc),C=FLOW.cols,nc=C+1,R0=FLOW.rows,nrow=R0+1,key=o.flowKey(),ctr=o.toWorld(o.flowCenter),c1=Math.floor(C/2)*3,c2=Math.ceil(C/2)*3,g=8.5*root,ground=-.115;
+  const o=this.owner,sc=o.scale,root=Math.sqrt(sc),C=FLOW.cols,nc=C+1,R0=FLOW.rows,nrow=R0+1,ctr=o.toWorld(o.flowCenter),c1=Math.floor(C/2)*3,c2=Math.ceil(C/2)*3,g=8.5*root,ground=-.115;
   this.tears=tears;this.snot=snot;
   for(const s of this.strips){
    const flow=s.snot?snot:tears;
    if(flow<=.004){s.mat.alpha=0;continue;}
-   /* 얼굴 표면을 재는 무거운 계산은 표정이 달라졌을 때만 다시 한다 */
-   if(!s.ready||s.key!==key||++s.age>8){
-    s.key=key;s.age=0;
-    for(let j=0;j<nrow;j++)for(let i=0;i<nc;i++)s.local.set(s.snot?o.snotLocal(s.side,i/C*2-1,j/R0,.018):o.tearLocal(s.side,i/C*2-1,j/R0,.018),(j*nc+i)*3);
-   }
+   /* 얼굴 표면 위의 물길 좌표는 시작할 때 단계별로 미리 재 두고(o.buildStripPoses), 매 프레임은 표정 값으로 그 사이를 보간만 한다 */
+   o.fillStripLocal(s);
    /* 몸통의 일그러짐과 떨림은 매 프레임 따라간다 */
    const w=s.world,N=s.normal;o.toWorldArray(s.local,w,nrow*nc);
    for(let j=0;j<nrow;j++){
@@ -1153,6 +1188,8 @@ class Bowl{ constructor(scene,id,pos,scale,angle){
   this.parts.push({name:'trim',mesh:mesh.trim,mat:{...body,color:BRONZE[id],rough:.39}});
   this.parts.push({name:'foot',mesh:mesh.foot,mat:{kind:6,color:[.15,.08,.025],metal:.8,rough:.42}});
   for(const name of ['cavity','eyes','nostrils'])this.parts.push({name,mesh:mesh[name],mat:{kind:name==='nostrils'?9:14,color:[.009,.004,.0015],metal:0,rough:.98}});
+  /* 바닥 반사용: 저해상 메시, 어두운 구멍 부품 생략 */
+  this.mirrorParts=this.parts.filter(p=>['shell','skin','inner','trim','foot'].includes(p.name)).map(p=>({name:p.name,mesh:scene.sculptLow[p.name],mat:p.mat}));
   this.matrix=M.model(pos,scale);this.flowCenter=[0,1.6,0];this.flow=new TearFlow(this,scene);
   for(const side of [-1,1]){
    const rows=28,n=5,verts=[],indices=[];for(let j=0;j<=rows;j++)for(let k=0;k<=n;k++)verts.push(0,0,0,0,0,1,k/n,j/rows);
@@ -1160,7 +1197,10 @@ class Bowl{ constructor(scene,id,pos,scale,angle){
    
   }
  }
- toWorldArray(src,dst,n){const m=this.matrix,c=smooth(.22,1,this.blink),t=this.now||0,seed=this.id*2.19,heave=Math.pow(.5+.5*Math.sin(t*16.3+seed),2),squash=c*(.085+.075*heave),wave=.9*Math.sin(t*1.7+seed),twist=c*.20*Math.sin(t*3.1+seed);for(let i=0;i<n;i++){let x=src[i*3],y=src[i*3+1],z=src[i*3+2];if(c>.001){const h=clamp(y/3.2),ang=Math.atan2(x,z),buckle=c*h*(.085*Math.sin(3*ang+1.3+wave)+.05*Math.sin(5*ang-t*2.3+seed*2)+.03*heave*Math.sin(7*ang+t*5.1)),grow=(1+squash*(.55+.9*Math.sin(h*3.14159)))*(1+buckle),tw=twist*(h-.25),cs=Math.cos(tw),sn=Math.sin(tw),gx=x*grow,gz=z*grow;y=y*(1-squash)-c*h*h*.09*(.5+.5*Math.cos(ang))*(.6+.4*heave);x=cs*gx+sn*gz;z=-sn*gx+cs*gz-c*h*h*(.20+.12*heave);}dst[i*3]=m[0]*x+m[4]*y+m[8]*z+m[12];dst[i*3+1]=m[1]*x+m[5]*y+m[9]*z+m[13];dst[i*3+2]=m[2]*x+m[6]*y+m[10]*z+m[14];}} toWorld(q){const out=[0,0,0];this.toWorldArray(q,out,1);return out;} flowKey(){return Math.round(this.open*60)+'|'+Math.round(this.expression*60)+'|'+Math.round(this.blink*60);} tearLocal(side,across,u,extra){return faceXYZ(side*(.80+.12*u)+across*FLOW.tearHalf,2.40-this.open*.27-FLOW.tearLen*u,{open:this.open,grief:this.expression,blink:this.blink},extra);} snotLocal(side,across,u,extra){const g=this.expression,w=this.blink,pose={open:this.open,grief:g,blink:w},nx=.185+.018*g+.03*w,ny=1.862+.012*w-(.017+.014*g+.034*w)*.8,wd=.585+this.open*.108+w*this.open*.20,lipY=Math.min(ny-.02,mouthContour(Math.acos(clamp(nx/wd,-1,1)),pose)[1]+.035);return faceXYZ(side*nx+across*FLOW.snotHalf,lerp(ny,lipY,u),pose,extra);}
+ toWorldArray(src,dst,n){const m=this.matrix,c=smooth(.22,1,this.blink),t=this.now||0,seed=this.id*2.19,heave=Math.pow(.5+.5*Math.sin(t*16.3+seed),2),squash=c*(.085+.075*heave),wave=.9*Math.sin(t*1.7+seed),twist=c*.20*Math.sin(t*3.1+seed);for(let i=0;i<n;i++){let x=src[i*3],y=src[i*3+1],z=src[i*3+2];if(c>.001){const h=clamp(y/3.2),ang=Math.atan2(x,z),buckle=c*h*(.085*Math.sin(3*ang+1.3+wave)+.05*Math.sin(5*ang-t*2.3+seed*2)+.03*heave*Math.sin(7*ang+t*5.1)),grow=(1+squash*(.55+.9*Math.sin(h*3.14159)))*(1+buckle),tw=twist*(h-.25),cs=Math.cos(tw),sn=Math.sin(tw),gx=x*grow,gz=z*grow;y=y*(1-squash)-c*h*h*.09*(.5+.5*Math.cos(ang))*(.6+.4*heave);x=cs*gx+sn*gz;z=-sn*gx+cs*gz-c*h*h*(.20+.12*heave);}dst[i*3]=m[0]*x+m[4]*y+m[8]*z+m[12];dst[i*3+1]=m[1]*x+m[5]*y+m[9]*z+m[13];dst[i*3+2]=m[2]*x+m[6]*y+m[10]*z+m[14];}} toWorld(q){const out=[0,0,0];this.toWorldArray(q,out,1);return out;} tearLocal(side,across,u,extra,pose){pose=pose||{open:this.open,grief:this.expression,blink:this.blink};return faceXYZ(side*(.80+.12*u)+across*FLOW.tearHalf,2.40-pose.open*.27-FLOW.tearLen*u,pose,extra);} snotLocal(side,across,u,extra,pose){pose=pose||{open:this.open,grief:this.expression,blink:this.blink};const g=pose.grief,w=pose.blink,nx=.185+.018*g+.03*w,ny=1.862+.012*w-(.017+.014*g+.034*w)*.8,wd=.585+pose.open*.108+w*pose.open*.20,lipY=Math.min(ny-.02,mouthContour(Math.acos(clamp(nx/wd,-1,1)),pose)[1]+.035);return faceXYZ(side*nx+across*FLOW.snotHalf,lerp(ny,lipY,u),pose,extra);}
+ /* 물길 좌표를 일곱 단계 표정마다 미리 재 둔다 (볼당 4물길 × 52점 × 8단계, 시작할 때 한 번) */
+ buildStripPoses(s,cache){const C=FLOW.cols,nc=C+1,R0=FLOW.rows;s.poses=CRY_POSES.map(k=>{const pose={open:k.open,grief:k.grief,blink:k.wail},out=new Float32Array(cache);for(let j=0;j<=R0;j++)for(let i=0;i<nc;i++)out.set(s.snot?this.snotLocal(s.side,i/C*2-1,j/R0,.018,pose):this.tearLocal(s.side,i/C*2-1,j/R0,.018,pose),(j*nc+i)*3);return out;});}
+ fillStripLocal(s){const g=clamp(this.expression,0,CRY_POSES[CRY_MAX].grief);let k=0;while(k<CRY_MAX-1&&CRY_POSES[k+1].grief<=g)k++;const a=s.poses[k],b=s.poses[k+1],f=clamp((g-CRY_POSES[k].grief)/(CRY_POSES[k+1].grief-CRY_POSES[k].grief)),L=s.local;for(let i=0;i<L.length;i++)L[i]=a[i]+(b[i]-a[i])*f;}
  tick(t,dt,engine){
   const v=engine?.voices[this.id],e=this.energy=v?v.level:0;
   const lv=clamp(v?.lv||0,0,CRY_MAX),k=clamp((lv-1)/(CRY_MAX-1)),poseTarget=sampleCryPose(lv);
@@ -1176,11 +1216,12 @@ class Bowl{ constructor(scene,id,pos,scale,angle){
   this.blink=lerp(this.blink,wail,1-Math.exp(-dt*14));
   this.cryStage=lv;
   /* Faces stay fixed to their own forward direction rather than tracking the camera. */
-  this.rot[1]=this.angle;
+  this.rot[1]=this.faceAngle??this.angle;
   const kick=(this.scene.reduced?.2:1)*Math.exp(-Math.max(0,t-this.hitAt)*18)*.015;
   const trem=(this.scene.reduced?.2:1)*e*(.004+.006*k);
   this.matrix=M.model(this.pos,this.scale,[-kick+trem*Math.sin(t*11+this.id),this.rot[1],trem*Math.sin(t*14+this.id)]);
   for(const p of this.parts){p.model=this.matrix;p.energy=this.scene.reduced?e*.18:e;p.pulse=this.pulse;p.open=this.open;p.expression=this.expression;p.blink=this.blink;p.crumple=this.blink;p.seed=this.id*2.19;}
+  for(const p of this.mirrorParts){p.model=this.matrix;p.energy=0;p.pulse=0;p.open=this.open;p.expression=this.expression;p.blink=this.blink;p.crumple=this.blink;p.seed=this.id*2.19;}
   const tears=poseTarget.tears*release,snot=poseTarget.snot*release;
   this.tearFlow=lerp(this.tearFlow,tears,1-Math.exp(-dt*(tears>this.tearFlow?2.5:.85)));
   this.snotFlow=lerp(this.snotFlow||0,snot,1-Math.exp(-dt*(snot>(this.snotFlow||0)?1.6:.7)));
@@ -1223,6 +1264,7 @@ class Bowl{ constructor(scene,id,pos,scale,angle){
  * Pose slots are the same three the bowls use: open = jaw swing, grief = sad lids and sinking mouth corners,
  * blink = the top-stage wail (lids squeezed into slanted slits, nostrils flared, snout lifted). */
 const FROG={zn:-.2,zt:3.05,zh:.55,yl:1.02,eye:[.98,1.98,1.35],eyeR:.40};
+const FROG_KEY={grief:[0,.06,.18,.36,.62,1.02],blink:[0,0,.02,.15,.42,1]}; // 개구리 단계별 표정 (creature.tick의 표와 같은 값)
 const frogEase=v=>1-Math.pow(1-v,2.2);
 function frogRing(s){return {rx:1.92*Math.pow(Math.max(0,1-Math.pow(s,2.5)),.46),up:.95*Math.pow(Math.max(0,1-Math.pow(s,2.8)),.5),dn:.62*Math.pow(Math.max(0,1-Math.pow(s,2.2)),.55)};}
 function frogHinge(q,p,upper){
@@ -1267,7 +1309,7 @@ function emptyTube(renderer,rows,n){
 }
 class AppendixCreature{
  constructor(scene){
-  Object.assign(this,{scene,level:0,lv:0,open:0,expression:0,blink:0,energy:0,pulse:0,tearFlow:0,snotFlow:0,parts:[],strands:[],touch:[-.1,3.0,-.4],touchAt:-10,sweepAt:-10,calmAt:0,travel:0,lastK:null,held:false,scale:1,dropClock:0,matrix:M.identity()});
+  Object.assign(this,{scene,level:0,lv:0,open:0,expression:0,blink:0,energy:0,pulse:0,tearFlow:0,snotFlow:0,parts:[],strands:[],touch:[-.1,3.0,-.4],touchAt:-10,sweepAt:-10,calmAt:0,travel:0,lastK:null,held:false,scale:1,dropClock:0,matrix:M.identity(),pop:0,nod:0,grooveHold:false,sweepMove:null,sweepK:.55});
   const R=scene.renderer,wood={kind:15,color:[.40,.22,.085],metal:0,rough:.64},pale={...wood,color:[.48,.28,.115],rough:.68},burnt={kind:15,color:[.16,.072,.030],metal:0,rough:.72},dark={kind:14,color:[.009,.004,.001],metal:0,rough:.98};
   const add=(data,mat,name)=>this.parts.push({name,mesh:R.mesh(data),mat});
   /* skull, lower jaw, mouth lining, tongue */
@@ -1337,7 +1379,10 @@ class AppendixCreature{
   this.stick={mesh:R.mesh(combineData(twig)),mat:{kind:17,color:[.115,.075,.045],metal:0,rough:.9},pos:[-2.35,.10,3.56],rot:[0,-.32,-.08]};
   this.flowCenter=[0,1.0,1.2];this.flow=new TearFlow(this,scene);this.plinth={mesh:R.mesh(lathe([[.01,-.34],[4.4,-.34],[4.4,-.12],[4.27,-.035],[.01,-.035]],96)),mat:{kind:0,color:[.026,.028,.031],metal:.20,rough:.65}};
  }
- pose(){return {open:this.open,grief:this.expression,blink:this.blink};} toWorldArray(src,dst,n){const m=this.matrix;for(let i=0;i<n;i++){const x=src[i*3],y=src[i*3+1],z=src[i*3+2];dst[i*3]=m[0]*x+m[4]*y+m[8]*z+m[12];dst[i*3+1]=m[1]*x+m[5]*y+m[9]*z+m[13];dst[i*3+2]=m[2]*x+m[6]*y+m[10]*z+m[14];}} toWorld(q){const out=[0,0,0];this.toWorldArray(q,out,1);return out;} flowKey(){return Math.round(this.open*40)+'|'+Math.round(this.expression*60)+'|'+Math.round(this.blink*60);} tearLocal(side,across,u,extra){const psi=lerp(.78,.03,u);return frogSkin(side>0?psi:Math.PI-psi,.477+.06*u+across*.055,this.pose(),extra+.03,true);} snotLocal(side,across,u,extra){const ss=lerp(.905,.9962,u),ps=Math.acos(Math.pow(Math.min(1,.30/frogRing(ss).rx),1.25))+across*.05;return frogSkin(side>0?ps:Math.PI-ps,ss,this.pose(),extra+.03,true);}
+ pose(){return {open:this.open,grief:this.expression,blink:this.blink};} toWorldArray(src,dst,n){const m=this.matrix;for(let i=0;i<n;i++){const x=src[i*3],y=src[i*3+1],z=src[i*3+2];dst[i*3]=m[0]*x+m[4]*y+m[8]*z+m[12];dst[i*3+1]=m[1]*x+m[5]*y+m[9]*z+m[13];dst[i*3+2]=m[2]*x+m[6]*y+m[10]*z+m[14];}} toWorld(q){const out=[0,0,0];this.toWorldArray(q,out,1);return out;} tearShape(side,across,u,extra,pose){const psi=lerp(.78,.03,u);return frogShape(side>0?psi:Math.PI-psi,.477+.06*u+across*.055,pose,extra+.03,true);} snotShape(side,across,u,extra,pose){const ss=lerp(.905,.9962,u),ps=Math.acos(Math.pow(Math.min(1,.30/frogRing(ss).rx),1.25))+across*.05;return frogShape(side>0?ps:Math.PI-ps,ss,pose,extra+.03,true);}
+ /* 두개골 모양(무거움)은 단계별로 미리 재 두고, 입 벌림에 따른 기울기(frogHinge, 가벼움)만 매 프레임 건다 */
+ buildStripPoses(s,cache){const C=FLOW.cols,nc=C+1,R0=FLOW.rows;s.poses=FROG_KEY.grief.map((g,k)=>{const pose={open:0,grief:g,blink:FROG_KEY.blink[k]},out=new Float32Array(cache);for(let j=0;j<=R0;j++)for(let i=0;i<nc;i++)out.set(s.snot?this.snotShape(s.side,i/C*2-1,j/R0,.018,pose):this.tearShape(s.side,i/C*2-1,j/R0,.018,pose),(j*nc+i)*3);return out;});}
+ fillStripLocal(s){const G=FROG_KEY.grief,g=clamp(this.expression,0,G[G.length-1]);let k=0;while(k<G.length-2&&G[k+1]<=g)k++;const a=s.poses[k],b=s.poses[k+1],f=clamp((g-G[k])/(G[k+1]-G[k])),L=s.local,pose=this.pose();for(let i=0;i<L.length;i+=3){const q=frogHinge([a[i]+(b[i]-a[i])*f,a[i+1]+(b[i+1]-a[i+1])*f,a[i+2]+(b[i+2]-a[i+2])*f],pose,true);L[i]=q[0];L[i+1]=q[1];L[i+2]=q[2];}}
  /* tears use the bowls' face coordinates: x picks the side, falling y slides from the eye rim down the cheek to the lip */
 
  contains(x,y){const s=this.scene,c=s.project([0,1.7,.1]),a=s.project([-2.5,.2,2]),b=s.project([2.5,.2,2]),top=s.project([0,3.2,-.8]);return x>Math.min(a.x,b.x)-40&&x<Math.max(a.x,b.x)+40&&y>top.y-40&&y<c.y+Math.abs(a.y-c.y)+50;}
@@ -1356,21 +1401,26 @@ class AppendixCreature{
  climb(){this.lv=Math.min(5,(this.lv>.35?Math.max(1,Math.ceil(this.lv-.15)):0)+1);this.calmAt=performance.now()/1000+1.4;}
  kick(force){const now=performance.now()/1000;this.level=Math.min(1.24,this.level*.72+.28+force*.55);this.touchAt=now;this.calmAt=now+1.4;if(this.lv<1)this.lv=1;}
  stroke(){const fresh=this.lv<.35;this.sweepAt=performance.now()/1000;this.kick(.9);if(!fresh)this.climb();}
+ /* 리듬 긁기: 막대가 등 위 k(0~1)의 현재 자리에서 목표 자리까지 dur초에 걸쳐 움직인다. 소리(strum)와 같은 길이 */
+ sweep(to,dur){this.sweepMove={from:this.sweepK,to,t0:performance.now()/1000,dur:Math.max(.03,dur)};this.sweepK=to;}
+ beat(v){this.nod=Math.max(this.nod,v);} mouthPop(v){this.pop=Math.max(this.pop,v);}
  tick(t,dt,audio){
   const now=performance.now()/1000,age=now-this.sweepAt;
   this.level*=Math.exp(-dt*5.0);
   if(age>=0&&age<.52){this.reach(age/.52);this.touchAt=now;this.level=Math.max(this.level,.85);}
+  this.pop*=Math.exp(-dt*9);this.nod*=Math.exp(-dt*7);
+  if(this.sweepMove){const m=this.sweepMove,u=(now-m.t0)/m.dur;if(u>=1){this.reach(m.to);this.sweepMove=null;}else{const s=u*u*(3-2*u);this.reach(lerp(m.from,m.to,s));}this.touchAt=now;this.level=Math.max(this.level,.55);}
   if(now>this.calmAt)this.lv=Math.max(0,this.lv-dt*.6);
   const lv=this.lv,k=clamp((lv-1)/4),at=tab=>{const i=Math.min(4,Math.floor(lv));return lerp(tab[i],tab[i+1],lv-i);};
   if(audio?.scraper)audio.scraper.mood(k);
   /* the mouth follows the scraping itself; the sad lids, flared nostrils and tears follow the slower mood */
-  const wail=.62+.38*(.5+.5*Math.sin(t*TAU*(3.45+1.6*k)+.7)),target=clamp(at([0,.20,.42,.64,.86,1])*clamp(this.level*1.25)*wail);
+  const wail=.62+.38*(.5+.5*Math.sin(t*TAU*(3.45+1.6*k)+.7)),target=clamp(Math.max(at([0,.20,.42,.64,.86,1])*clamp(this.level*1.25)*wail,this.pop));
   this.open=lerp(this.open,target,1-Math.exp(-dt*(target>this.open?30:12)));
   const grief=clamp(at([0,.06,.18,.36,.62,1.02])*this.scene.wrinkleAmount,0,1.08);
   this.expression=lerp(this.expression,grief,1-Math.exp(-dt*(grief>this.expression?14:3.4)));
   this.blink=lerp(this.blink,at([0,0,.02,.15,.42,1])*clamp(.35+this.level),1-Math.exp(-dt*9));
   this.energy=this.level;const vib=(this.scene.reduced?.2:1)*this.level*(.6+.6*k);
-  this.matrix=M.model([.022*vib*Math.sin(t*53),.017*vib*Math.sin(t*8),0],1,[-.016*vib,.10+Math.sin(t*9)*vib*.014,Math.sin(t*7)*vib*.018]);
+  this.matrix=M.model([.022*vib*Math.sin(t*53),.017*vib*Math.sin(t*8)-.05*this.nod,0],1,[-.016*vib+.085*this.nod,.10+Math.sin(t*9)*vib*.014,Math.sin(t*7)*vib*.018]);
   for(const p of this.parts){p.model=this.matrix;p.open=this.open;p.expression=this.expression;p.blink=this.blink;p.energy=0;p.pulse=0;p.seed=2.38;}
   this.tearFlow=lerp(this.tearFlow,at([0,.20,.40,.60,.82,1]),1-Math.exp(-dt*2.4));
   this.dropClock+=dt*FLOW.rate(this.tearFlow)*this.scene.tearAmount;
@@ -1390,7 +1440,7 @@ class AppendixCreature{
    }
    this.scene.renderer.updateMesh(s.mesh);
   }
-  const held=this.held||now-this.touchAt<.42;
+  const held=this.held||this.grooveHold||now-this.touchAt<.42;
   this.stick.pos=held?[this.touch[0]-.4,this.touch[1]+.09,this.touch[2]]:[-2.35,.10,3.56];
   this.stick.rot=held?[.02,-.23,-.23]:[.01,-.38,-.08];
  }
@@ -1409,6 +1459,10 @@ class Scene{
   });
   this.rippleValues=new Float32Array(32);
   this.dropBatch=R.makeInstances(teardropData(),1500,{kind:13,color:[.59,.71,.77],metal:.06,rough:.04,alpha:.93});
+  /* 울림 고리와 물보라 링: 각각 드로우 한 번 */
+  this.ringBatch=R.makeInstances(torusData(1,.009,80,6),96,{kind:3,color:[.98,.72,.44],glow:.5,alpha:.999,add:true});
+  this.splashBatch=R.makeInstances(torusData(1,.009,80,6),80,{kind:3,color:[.75,.58,.34],glow:.5,alpha:.999,add:true});
+  this.ensembleA=0;this.ensembleOn=false;
   this.buildTemple();this.buildMallet();this.creature=new AppendixCreature(this);this.resize(innerWidth,innerHeight);
   this.mallet.pos=this.mallet.rest.slice();for(const b of this.bowls)b.rot[1]=b.angle;
  }
@@ -1499,26 +1553,27 @@ class Scene{
   }if(best===null){let near=34;for(const b of this.bowls){const q=this.project([b.pos[0],b.pos[1]+1.66*b.scale,b.pos[2]]);if(q.w<=0)continue;const d=Math.hypot(q.x-x,q.y-y);if(d<near){near=d;best=b.id;}}}return best;
  }
  hit(i,t,strength){const b=this.bowls[i],m=this.mallet;b.hitAt=t+.10;m.from=m.pos.slice();m.target=M.point(b.matrix,[-1.89,2.49,1.92]).slice(0,3);m.time=t;m.scale=clamp(b.scale*.68,.30,.86);this.rings.push({id:i,t:t+.1,strength});if(this.rings.length>22)this.rings.shift();}
- dripFrom(owner,p,r){if(this.drops.length>=330)this.drops.shift();this.drops.push({owner,x:0,y:0,r,p,life:1,v:.3,floor:-.115,slide:0});}
+ dripFrom(owner,p,r){if(this.drops.length>=330)this.drops.shift();this.drops.push({owner,x:0,y:0,r,p,life:1,v:.3,floor:-.115,slide:0,free:true,k:1,vx:0,vz:0,sp:0,well:0,scale:1});}
  spawnDrop(d){if(this.drops.length>=1450)this.drops.shift();this.drops.push(Object.assign({life:0,v:0,vx:0,vz:0,k:0,sp:0,well:0,slide:0,free:false,floor:-.115,scale:1,p:[0,0,0]},d));}
  updateDrops(t,dt){
   for(const d of this.drops){
    d.life+=dt;
-   if(!d.free&&d.life<d.well+d.slide){const u=clamp((d.life-d.well)/d.slide);d.p=d.flow.at(d.strip,u*(.35+.65*u),d.across,d.r*.45);d.k=.3+.7*smooth(0,d.well,d.life);d.sp=u;}
+   if(!d.free&&d.life<d.well+d.slide){const u=clamp((d.life-d.well)/d.slide);d.flow.at(d.strip,u*(.35+.65*u),d.across,d.r*.45,d.p);d.k=.3+.7*smooth(0,d.well,d.life);d.sp=u;}
    else{if(!d.free){d.free=true;d.k=1;const e=d.strip.endVel,j=.25*Math.sqrt(d.scale);d.vx=e[0]+(Math.random()-.5)*j;d.v=-e[1];d.vz=e[2]+(Math.random()-.5)*j;}d.v+=dt*8.5*Math.sqrt(d.scale);d.p[0]+=d.vx*dt;d.p[1]-=d.v*dt;d.p[2]+=d.vz*dt;}
    if(d.p[1]<=d.floor){if(this.splashes.length<75)this.splashes.push({p:[d.p[0],-.119,d.p[2]],life:0,size:d.r});d.dead=true;}
   }
-  this.drops=this.drops.filter(d=>!d.dead&&d.life<4);
-  for(const s of this.splashes)s.life+=dt;this.splashes=this.splashes.filter(s=>s.life<.85);
+  {let n=0;const D=this.drops;for(let i=0;i<D.length;i++){const d=D[i];if(!d.dead&&d.life<4)D[n++]=d;}D.length=n;}
+  {let n=0;const S=this.splashes;for(let i=0;i<S.length;i++){const s=S[i];s.life+=dt;if(s.life<.85)S[n++]=s;}S.length=n;}
   const batch=this.dropBatch;let i=0;
   for(const d of this.drops){const tall=d.free?1.05+clamp(d.v*.2,0,.55):.78+.34*d.sp,wide=d.r*d.k/Math.sqrt(Math.max(.85,tall)),mm=batch.matrices,o=i++*16;mm[o]=wide;mm[o+5]=d.r*d.k*tall;mm[o+10]=wide;mm[o+12]=d.p[0];mm[o+13]=d.p[1];mm[o+14]=d.p[2];mm[o+15]=1;}
   this.renderer.uploadInstances(batch,i);
  }
  tick(t,dt,audio){
   if(this.appendix)this.appendixViewAngle=lerp(this.appendixViewAngle,this.appendixTargetAngle,1-Math.exp(-dt*(this.reduced?18:7)));else this.viewAngle=lerp(this.viewAngle,this.targetAngle,1-Math.exp(-dt*(this.reduced?18:7)));this.updateCamera();
-  if(this.appendix)this.creature.tick(t,dt,audio);else for(const b of this.bowls)b.tick(t,dt,audio);
-  if(audio?.ready&&!this.appendix&&!audio.original)for(let i=0;i<this.bowls.length;i++){
-   const p=this.project(this.bowls[i].pos),pan=clamp((p.x/this.width*2-1)*.85,-.85,.85);audio.voices[i].pan.pan.setTargetAtTime(pan,t,.17);
+  if(this.appendix){this.creature.tick(t,dt,audio);this.placeEnsemble(dt);if(this.ensembleA>.001)for(const b of this.bowls)b.tick(t,dt,audio);}
+  else{if(this.ensembleA>0)this.placeEnsemble(dt);for(const b of this.bowls)b.tick(t,dt,audio);}
+  if(audio?.ready&&(!this.appendix||this.ensembleA>.001)&&!audio.original)for(let i=0;i<this.bowls.length;i++){
+   const p=this.project(this.bowls[i].pos),pan=clamp((p.x/this.width*2-1)*.85,-.85,.85);auto(audio.voices[i].pan.pan,pan,audio.ctx.currentTime,.17,.004);
   }
   const m=this.mallet,age=t-m.time;
   if(age>=0&&age<.10){let k=smooth(0,.10,age);m.pos=m.from.map((v,i)=>lerp(v,m.target[i],k));m.pos[1]+=.62*Math.sin(k*Math.PI);}
@@ -1527,29 +1582,43 @@ class Scene{
   const swing=age>=0&&age<.34?Math.sin(age/.34*Math.PI):0,mat=M.model(m.pos,m.scale,[.04,this.viewAngle-.25,-.06+.26*swing]);
   for(const p of m.parts)p.model=mat;
   this.updateDrops(t,dt);this.rings=this.rings.filter(r=>t-r.t<2.5);
-  for(let i=0;i<8;i++){const b=this.bowls[i];this.rippleValues.set([b.pos[0],b.pos[2],this.appendix?0:Math.max(.003,b.energy),b.scale],i*4);}
+  const rv=this.rippleValues;for(let i=0;i<8;i++){const b=this.bowls[i],o=i*4;rv[o]=b.pos[0];rv[o+1]=b.pos[2];rv[o+2]=(this.appendix&&this.ensembleA<.001)?0:Math.max(.003,b.energy);rv[o+3]=b.scale;}
+ }
+ /* 개구리 뒤 합주: 볼들이 물 밑에서 슥 떠올랐다가 다시 가라앉는다 */
+ placeEnsemble(dt){
+  const target=this.appendix&&this.ensembleOn?1:0;this.ensembleA=this.appendix?lerp(this.ensembleA,target,1-Math.exp(-dt*(target?.14:.35))):0;
+  if(this.ensembleA<.001&&!target){this.ensembleA=0;this.ensembleOn=false;for(const b of this.bowls){if(b.faceAngle!=null){b.pos=b.home.slice();b.faceAngle=null;}}return;}
+  /* 큰 볼이 가운데 오게 좌우로 배치 (왼쪽부터 7 5 3 1 0 2 4 6) */
+  const a=this.ensembleA,ease=a*a*(3-2*a),behind=this.appendixViewAngle+Math.PI,slot=[4,3,5,2,6,1,7,0];
+  for(const b of this.bowls){const k=slot[b.id],ang=behind+(k-3.5)/3.5*1.05,r=9.8+(k%2)*1.3,sc=b.scale;
+   b.pos=[Math.sin(ang)*r,lerp(-.13-3.5*sc,-.13+sc*.12,ease),Math.cos(ang)*r];b.faceAngle=ang+Math.PI;}
  }
  render(t){
   const R=this.renderer;
   const mirrorDue=(this.reflFrame++%2===0);for(const mirror of mirrorDue?[true,false]:[false]){
    R.begin(this.camera,t,this.rippleValues,mirror);if(!mirror)R.draw(this.floor);
+   const bowlsVisible=!this.appendix||this.ensembleA>.001;
    if(this.appendix){for(const p of this.creature.parts)R.draw(p);R.draw(this.creature.stick);}
-   else{for(const b of this.bowls)for(const p of b.parts){if(mirror&&this.sculptLow[p.name])R.draw({...p,mesh:this.sculptLow[p.name]});else R.draw(p);}for(const p of this.mallet.parts)R.draw(p);}
+   if(bowlsVisible){for(const b of this.bowls)for(const p of (mirror?b.mirrorParts:b.parts))R.draw(p);}
+   if(!this.appendix)for(const p of this.mallet.parts)R.draw(p);
    if(mirror)continue;
-   if(!this.appendix)for(const b of this.bowls){
-    b.flow.draw(R);
-    const e=Math.max(0,b.energy),base=.72+b.scale*.58;
-    if(e>.02){
-      for(let n=0;n<4;n++){
-        const k=(t*(.42+n*.07)+b.id*.9+n*.25)%1,alpha=(.15-.02*n)*e*(1-k)*(1-k),sc=b.scale*(2.75+k*(2.6+.5*n));
-        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+(1.75+.35*n)*b.scale,b.pos[2]],scale:sc,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.98,.72,.44],glow:.52,alpha,add:true}});
-        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+(.55+.30*n)*b.scale,b.pos[2]],scale:sc*1.05,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.98,.72,.44],glow:.45,alpha:alpha*.82,add:true}});
-        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+(2.95+.30*n)*b.scale,b.pos[2]],scale:sc*.95,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.98,.72,.44],glow:.45,alpha:alpha*.82,add:true}});
-      }
+   if(bowlsVisible){
+    let n=0;const RB=this.ringBatch,tmp=[0,0,0];
+    for(const b of this.bowls){
+     b.flow.draw(R);
+     const e=Math.max(0,b.energy);if(e<=.02)continue;
+     for(let q=0;q<4;q++){
+      const k=(t*(.42+q*.07)+b.id*.9+q*.25)%1,alpha=(.15-.02*q)*e*(1-k)*(1-k),sc=b.scale*(2.75+k*(2.6+.5*q));
+      tmp[0]=b.pos[0];tmp[2]=b.pos[2];
+      tmp[1]=b.pos[1]+(1.75+.35*q)*b.scale;R.instanceRing(RB,n++,tmp,sc,alpha);
+      tmp[1]=b.pos[1]+(.55+.30*q)*b.scale;R.instanceRing(RB,n++,tmp,sc*1.05,alpha*.82);
+      tmp[1]=b.pos[1]+(2.95+.30*q)*b.scale;R.instanceRing(RB,n++,tmp,sc*.95,alpha*.82);
+     }
     }
+    R.uploadInstances(RB,n);if(n)R.draw(RB);
    }
    if(this.appendix)this.creature.flow.draw(R);if(this.dropBatch.instances)R.draw(this.dropBatch);
-   for(const s of this.splashes){const k=s.life/.85,sc=.03+k*.25;R.draw({mesh:this.ring,pos:s.p,scale:sc,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.75,.58,.34],glow:.5,alpha:(1-k)*.28,add:true}});}
+   {let n=0;const SB=this.splashBatch;for(const s of this.splashes){if(n>=SB.capacity)break;const k=s.life/.85;R.instanceRing(SB,n++,s.p,.03+k*.25,(1-k)*.28);}R.uploadInstances(SB,n);if(n)R.draw(SB);}
   }
  }
 }
@@ -1562,7 +1631,7 @@ const speakerOff='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 class App{
  constructor(){
   this.audio=new AudioEngine();Object.assign(this.audio,{reference:.28,fracture:.08,original:false,uiSound:true});
-  this.started=false;this.ready=false;this.pointers=new Map();this.lastHit=Array(8).fill(-100);this.time=0;this.force=.78;this.wind=false;this.nextWind=0;this.cameraMode=false;this.frames=0;this.fps=60;this.errors=[];this.slow=0;this.lastFrame=performance.now();this.test=new URLSearchParams(location.search).has('test');this.dpr=Math.min(devicePixelRatio||1,innerWidth<760?1.50:1.70);
+  this.started=false;this.ready=false;this.pointers=new Map();this.lastHit=Array(8).fill(-100);this.time=0;this.force=.78;this.wind=false;this.nextWind=0;this.cameraMode=false;this.frames=0;this.fps=60;this.errors=[];this.slow=0;this.lastFrame=performance.now();this.test=new URLSearchParams(location.search).has('test');this.dpr=this.dpr0=Math.min(devicePixelRatio||1,innerWidth<760?1.50:1.70);
  }
  async init(){
   try{
@@ -1578,7 +1647,7 @@ class App{
  }
  async start(){
   if(this.startPromise)return this.startPromise;if(this.started){if(this.audio.ctx?.state==='suspended')await this.audio.ctx.resume();return;}
-  this.startPromise=(async()=>{try{await this.audio.start();this.started=true;this.time=this.audio.ctx.currentTime;this.startAudioClock();document.body.classList.add('playing');$('#intro').setAttribute('aria-hidden','true');$('#start').blur();this.updateLabels(true);this.audio.uiTing('open');}catch(e){this.fail(e);}})();
+  this.startPromise=(async()=>{try{await this.audio.start();this.started=true;this.startAudioClock();document.body.classList.add('playing');$('#intro').setAttribute('aria-hidden','true');$('#start').blur();this.updateLabels(true);this.audio.uiTing('open');}catch(e){this.fail(e);}})();
   await this.startPromise;this.startPromise=null;
  }
  toast(text){$('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),1900);}
@@ -1600,13 +1669,15 @@ class App{
   await this.start();if(!this.audio.ready)return;this.damp();this.releaseAll();this.scene.appendix=on;this.scene.drops=[];this.scene.splashes=[];this.scene.dropBatch.instances=0;
   document.body.classList.toggle('appendix',on);$('#appendixDock').hidden=!on;$('#appendix').classList.toggle('active',on);$('#appendix').setAttribute('aria-pressed',String(on));$('#appendix').setAttribute('aria-label',on?'크라잉볼로 돌아가기':'개구리 열기');this.updateModeToggle(on);$('#showFrog').setAttribute('aria-pressed',String(on));
   this.settings(false,false);this.scene.updateCamera();this.audio.uiTing(on?'open':'close');this.updateLabels(true);
+  if(!on){this.scene.ensembleOn=false;if(this.groove){this.groove.listen=0;this.groove.paused=true;}}
+  this.refreshButtons();
  }
  settings(open,withSound=true){$('#settings').hidden=!open;$('#tune').setAttribute('aria-expanded',String(open));if(withSound)this.audio.uiTing(open?'open':'close');}
  releaseAll(){this.pointers.clear();this.scene.creature.endHold();if(this.audio.ready)for(const v of this.audio.voices)v.rub=0;}
  release(id){const p=this.pointers.get(id);this.pointers.delete(id);if(p?.mode==='bowl'&&this.audio.voices[p.bowl]&&![...this.pointers.values()].some(q=>q.bowl===p.bowl&&q.mode==='bowl'))this.audio.voices[p.bowl].rub=0;if(p?.mode==='scrape'&&![...this.pointers.values()].some(q=>q.mode==='scrape'))this.scene.creature.endHold();$('#stage').style.cursor='grab';}
  hit(i,strength=this.force){
   if(!this.audio.ready||this.scene.appendix||i<0||i>=8)return;
-  const t=this.audio.ctx.currentTime;if(t-this.lastHit[i]<.065)return;this.lastHit[i]=t;this.audio.hit(i,strength,.10);this.scene.hit(i,t,strength);
+  const t=this.audio.ctx.currentTime;if(t-this.lastHit[i]<.065)return;this.lastHit[i]=t;this.audio.hit(i,strength,.10);this.scene.hit(i,this.time+this.audio.lag(),strength);
   const n=$('.note[data-id="'+i+'"]');n.classList.add('struck');clearTimeout(n._timer);n._timer=setTimeout(()=>n.classList.remove('struck'),240);
  }
  scrape(){if(this.audio.ready&&this.scene.appendix){this.lastTouch=this.time;if(this.solo)this.solo.queue.length=0;this.audio.scraper.stroke(.78);this.scene.creature.stroke();}}
@@ -1614,7 +1685,7 @@ class App{
   $('#start').addEventListener('click',()=>this.start());$('#retry').addEventListener('click',()=>location.reload());
   $('#tune').addEventListener('click',()=>this.settings($('#settings').hidden));$('#closeSettings').addEventListener('click',()=>this.settings(false));
   $('#mute').addEventListener('click',()=>{this.audio.muted=!this.audio.muted;$('#mute').innerHTML=this.audio.muted?speakerOff:speakerOn;$('#mute').setAttribute('aria-pressed',String(this.audio.muted));$('#mute').setAttribute('aria-label',this.audio.muted?'소리 켜기':'소리 끄기');});
-  $('#wind').addEventListener('click',async()=>{await this.start();if(this.audio.ready)this.setWind(!this.wind);});$('#damp').addEventListener('click',()=>this.damp());$('#dampMini').addEventListener('click',()=>this.toggleWail());$('#soloCry').addEventListener('click',()=>this.toggleSolo());$('#showBowls').addEventListener('click',()=>this.appendix(false));$('#showFrog').addEventListener('pointerdown',e=>e.stopPropagation());
+  $('#wind').addEventListener('click',async()=>{await this.start();if(this.audio.ready)this.setWind(!this.wind);});$('#damp').addEventListener('click',()=>this.damp());for(const b of document.querySelectorAll('#bowlModes button'))b.addEventListener('click',()=>this.setMode(b.dataset.mode));for(const b of document.querySelectorAll('#frogModes button'))b.addEventListener('click',()=>this.setFrogMode(b.dataset.mode));$('#showBowls').addEventListener('click',()=>this.appendix(false));$('#showFrog').addEventListener('pointerdown',e=>e.stopPropagation());
   $('#cameraMode').addEventListener('click',()=>{this.cameraMode=!this.cameraMode;$('#cameraMode').classList.toggle('active',this.cameraMode);$('#cameraMode').setAttribute('aria-pressed',String(this.cameraMode));this.updateLabels(true);});
   $('#resetCamera').addEventListener('click',()=>{this.scene.resetCamera();this.toast('전체가 보이는 처음 시점');});
   $('#prevBowl').addEventListener('click',()=>this.scene.focus(this.scene.focusIndex-1));$('#nextBowl').addEventListener('click',()=>this.scene.focus(this.scene.focusIndex+1));
@@ -1693,26 +1764,104 @@ class App{
  }
  loop(){
   if(!this.ready)return;requestAnimationFrame(()=>this.loop());const now=performance.now(),raw=(now-this.lastFrame)/1000,dt=clamp(raw,.001,.055);this.lastFrame=now;if(document.hidden)return;
-  this.time=this.audio.ready?this.audio.ctx.currentTime:now/1000;
+  this.time+=dt;   // 화면 시계는 프레임 시간으로 간다. 오디오 예약만 ctx.currentTime을 쓴다
 
   this.playTick(dt);
   this.scene.tick(this.time,dt,this.audio);this.scene.render(this.time);this.updateLabels();this.frames++;this.fps=lerp(this.fps,1/Math.max(.001,raw),.06);
   if(this.frames%4===0){let sum=0;for(const b of this.scene.bowls){sum+=b.energy;$('.note[data-id="'+b.id+'"]').style.setProperty('--e',clamp(b.energy).toFixed(3));}$('#resonance').style.setProperty('--power',clamp(sum/3).toFixed(3));}
   // Resolution adapts, never audio or the shape / number of instruments.
-  if(!this.test){this.slow=raw>.041?this.slow+1:Math.max(0,this.slow-2);if(this.frames>130&&this.slow>80&&this.dpr>1){this.dpr=Math.max(1,this.dpr-.2);this.slow=0;this.resize();}}
+  if(!this.test){this.ema=lerp(this.ema??raw,Math.min(raw,.1),.05);this.slow=this.ema>.022?this.slow+1:Math.max(0,this.slow-1);this.fast=this.ema<.012?this.fast+1:0;
+   if(this.frames>120&&this.slow>110&&this.dpr>1){this.dpr=Math.max(1,this.dpr-.25);this.slow=0;this.fast=0;this.resize();}
+   else if(this.fast>900&&this.dpr<this.dpr0){this.dpr=Math.min(this.dpr0,this.dpr+.25);this.fast=0;this.resize();}}
  }
 }
 /* ===== 베이스 · 혼자 울기 · 달래기 · 다 같이 울기 =====
  * 조율은 아래 PLAY의 숫자로 합니다.
  */
+/* ===== 곡 연주 악보 =====
+ * 볼 8개는 라·도·미·솔·레 + 라·도·미라서 그대로 A단조 펜타토닉이다. 마디마다 [박(1부터, 소수 가능), 볼 번호, 세기].
+ * 볼 번호: 0 A2  1 C3  2 E3  3 G3  4 D4  5 a4  6 c5  7 e5.  울림이 길어 느린 종 음악으로 썼다. 마음에 안 드는 마디는 여기서 고치면 된다.
+ */
+const SONG={bpm:54,rest:6,bars:[
+ [[1,0,.42]],                                             // 1 도입: 큰 볼
+ [[3,2,.38]],                                             // 2
+ [[1,0,.42],[4,5,.34]],                                   // 3
+ [[2,6,.34],[4,7,.36]],                                   // 4
+ [[1,0,.45],[1.5,7,.40],[3,6,.38]],                       // 5 선율(아기보울)
+ [[1,5,.40],[3,6,.36],[4,2,.40]],                         // 6
+ [[1,0,.45],[2,7,.42],[3,6,.38],[4,5,.36]],               // 7
+ [[1,5,.42],[3,3,.40]],                                   // 8
+ [[1,0,.45],[2,6,.40],[3,7,.42]],                         // 9
+ [[1,4,.40],[2,7,.40],[3,6,.38],[4,5,.36]],               // 10
+ [[1,0,.45],[3,5,.40],[4,6,.36]],                         // 11
+ [[1,2,.40],[2,5,.38],[3,3,.40]],                         // 12
+ [[1,0,.45],[2,2,.42],[3,7,.36]],                         // 13 응답(중간 볼이 부르고 아기보울이 한 박 뒤에 받음)
+ [[1,1,.42],[2,6,.36],[3,2,.40],[4,7,.34]],               // 14
+ [[1,0,.45],[2,4,.42],[3,5,.36],[4,2,.40]],               // 15
+ [[1,3,.42],[2,6,.36],[3,1,.42],[4,5,.34]],               // 16
+ [[1,0,.45],[1.5,2,.40],[2.5,7,.36],[3,4,.42],[4,6,.36]], // 17
+ [[1,1,.42],[2,5,.38],[3,3,.40],[4,7,.36]],               // 18
+ [[1,0,.45],[2,2,.42],[3,6,.38],[4,4,.40]],               // 19
+ [[1,1,.42],[2,7,.38],[3,2,.42],[4,5,.36]],               // 20
+ [[1,0,.52],[1.5,7,.44],[2,6,.44],[2.5,5,.44],[3,2,.46],[4,4,.46]],                   // 21 고조
+ [[1,3,.48],[1.5,7,.46],[2,6,.46],[3,0,.50],[3.5,5,.46],[4,2,.48]],                   // 22
+ [[1,0,.55],[1.5,7,.48],[2,5,.48],[2.5,6,.48],[3,4,.50],[3.5,7,.50],[4,1,.50]],       // 23
+ [[1,2,.52],[1.5,6,.50],[2,7,.50],[2.5,5,.50],[3,3,.52],[4,0,.58]],                   // 24
+ [[1,0,.60],[1.5,7,.52],[2,6,.52],[2.5,7,.54],[3,4,.55],[3.5,5,.52],[4,2,.55],[4.5,6,.52]], // 25
+ [[1,1,.55],[1.5,5,.52],[2,6,.52],[2.5,7,.52],[3,0,.62],[4,3,.55]],                   // 26
+ [[1,0,.55],[2,7,.46],[3,6,.42],[4,5,.40]],               // 27 잦아듦
+ [[1,2,.46],[3,5,.38]],                                   // 28
+ [[1,0,.50],[3,6,.36],[4,5,.34]],                         // 29
+ [[1,3,.42],[3,2,.38]],                                   // 30
+ [[1,0,.46],[3,5,.34]],                                   // 31
+ [[2,5,.30]]                                              // 32
+]};
+/* ===== 개구리 리듬 (귀로) =====
+ * 두 마디 반복. 박은 0부터(첫 마디 0~3, 둘째 마디 4~7). strokes: [박, 's' 짧게 | 'l' 길게, 악센트].
+ * croak: 목 울리는 박. bowls: 나중에 뒤에서 합류하는 볼들 [박, 볼, 세기]. chords: 아기보울 셋을 한꺼번에 [박, 세기].
+ * 시작할 때마다 셋 중 하나를 무작위로 고른다.
+ */
+const GROOVES=[
+ {name:'cumbia',bpm:94,long:.82,strokes:[[0,'s'],[.5,'s'],[1,'l',1],[2,'s'],[2.5,'s'],[3,'l',1],[4,'s'],[4.5,'s'],[5,'l',1],[6,'s'],[6.5,'s'],[7,'l',1]],croak:[[1,1],[3,.8],[5,1],[7,.8]],
+  bowls:[[0,0,.40],[1.5,2,.36],[2,0,.40],[3.5,2,.36],[4,0,.40],[5.5,2,.36],[6,0,.40],[7.5,2,.36]],chords:[[1,.28],[3,.28],[5,.28],[7,.28]]},
+ {name:'bossa',bpm:126,long:.6,strokes:[[0,'s',1],[.5,'s'],[1,'s'],[1.5,'s',1],[2,'s'],[2.5,'s'],[3,'s',1],[3.5,'s'],[4,'s'],[4.5,'s'],[5,'s',1],[5.5,'s'],[6,'s'],[6.5,'s',1],[7,'s'],[7.5,'s']],croak:[[0,1],[2,.7],[4,1],[6,.7]],
+  bowls:[[0,0,.38],[2,2,.34],[3.5,0,.30],[4,0,.38],[6,2,.34],[7.5,0,.30]],chords:[[1.5,.26],[3,.26],[5,.26],[6.5,.26]]},
+ {name:'salsa',bpm:100,long:.44,strokes:[[0,'l',1],[.5,'s'],[.75,'s'],[1,'l'],[1.5,'s'],[1.75,'s'],[2,'l',1],[2.5,'s'],[2.75,'s'],[3,'l'],[3.5,'s'],[3.75,'s'],[4,'l',1],[4.5,'s'],[4.75,'s'],[5,'l'],[5.5,'s'],[5.75,'s'],[6,'l',1],[6.5,'s'],[6.75,'s'],[7,'l'],[7.5,'s'],[7.75,'s']],croak:[[1,.9],[3,.9],[5,.9],[7,.9]],
+  bowls:[[1.5,2,.40],[3,0,.40],[5.5,2,.40],[7,0,.40],[.5,5,.26],[1.5,6,.26],[2.5,7,.26],[3.5,6,.26],[4.5,5,.26],[5.5,6,.26],[6.5,7,.26],[7.5,6,.26]],chords:[]}
+];
 const PLAY={
  drone:{level:.5,rise:1.5,wind:.05,             // 바닥 음의 기본 크기, 울음이 커질 때 따라 커지는 정도, 바람 소리 크기
   partials:[[55,.36,.030,.061],[110,.46,.024,.083],[165,.62,.014,.047],[220,.5,.007,.11],[330,.8,.004,.071]]}, // [주파수, 맥놀이 Hz, 크기, 부풀었다 가라앉는 속도 Hz]
  wail:{need:6,stage:6,feed:16,pull:.16},         // 볼 need개가 stage단계 이상이면 저절로 터짐, 버튼으로 터뜨리면 feed초 동안 이어짐, 카메라가 물러나는 정도
  solo:{pause:6,swellEvery:45},                   // 직접 치면 pause초 쉬었다가 다시 혼자 움, 북받치는 구절은 swellEvery초에 한 번까지만
- soothe:{after:.5,rate:2.2,still:10},frog:{pause:6,swellEvery:50,max:3.8}             // 손을 얹고 after초 지나면 달래기 시작, 초당 rate단계씩 잦아듦, still px 안에서 가만히 있어야 함
+ soothe:{after:.5,rate:2.2,still:10},frog:{pause:6,swellEvery:50,max:3.8},             // 손을 얹고 after초 지나면 달래기 시작, 초당 rate단계씩 잦아듦, still px 안에서 가만히 있어야 함
+ song:{cap:1},                                   // 곡 연주 중 볼이 올라갈 수 있는 최고 단계
+ ensemble:{after:[45,90],cap:1}                  // 개구리 리듬을 끊지 않고 이만큼(초, 무작위) 듣고 있으면 볼들이 뒤에서 슥 떠올라 합류
 };
-const FROG_ICONS={solo:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M17 30c1-13 8-21 15-21s14 8 15 21Z' fill='#a5763c'/><path d='M24 14h16M21 19h22M19 24h26' fill='none' stroke='#6b4722' stroke-width='2.4' stroke-linecap='round'/><path d='M11 53l-5 7M16 55l-2 7M21 56l1 6M53 53l5 7M48 55l2 7M43 56l-1 6' fill='none' stroke='#a5763c' stroke-width='3.4' stroke-linecap='round'/><ellipse cx='32' cy='42' rx='28' ry='15' fill='#d2a466'/><path d='M4 43c2 9 13 14 28 14s26-5 28-14c-7 6-17 8-28 8S11 49 4 43Z' fill='#b98a4e'/><circle cx='17' cy='28' r='9.5' fill='#b98a4e'/><circle cx='47' cy='28' r='9.5' fill='#b98a4e'/><circle cx='17' cy='28' r='6.6' fill='#140d07'/><circle cx='47' cy='28' r='6.6' fill='#140d07'/><circle cx='14.6' cy='25.6' r='2' fill='#fff'/><circle cx='44.6' cy='25.6' r='2' fill='#fff'/><circle cx='28.5' cy='39' r='1.4' fill='#4a2f16'/><circle cx='35.5' cy='39' r='1.4' fill='#4a2f16'/><path d='M9 47q23-6 46 0' fill='none' stroke='#4a2f16' stroke-width='2.8' stroke-linecap='round'/><path d='M12 37Q8.4 41.48 8.4 44A3.6 3.6 0 1 0 15.6 44Q15.6 41.48 12 37Z' fill='#a9def5'/><circle cx='10.7' cy='43.5' r='1.0' fill='#fff'/><path d='M52 37Q48 42.2 48 45A4 4 0 1 0 56 45Q56 42.2 52 37Z' fill='#a9def5'/><circle cx='50.6' cy='44.4' r='1.1' fill='#fff'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M46.5 43.5l10 6.5-10 6.5Z' fill='#e9cc96'/></svg>`,soloOn:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M17 30c1-13 8-21 15-21s14 8 15 21Z' fill='#a5763c'/><path d='M24 14h16M21 19h22M19 24h26' fill='none' stroke='#6b4722' stroke-width='2.4' stroke-linecap='round'/><path d='M11 53l-5 7M16 55l-2 7M21 56l1 6M53 53l5 7M48 55l2 7M43 56l-1 6' fill='none' stroke='#a5763c' stroke-width='3.4' stroke-linecap='round'/><ellipse cx='32' cy='42' rx='28' ry='15' fill='#d2a466'/><path d='M4 43c2 9 13 14 28 14s26-5 28-14c-7 6-17 8-28 8S11 49 4 43Z' fill='#b98a4e'/><circle cx='17' cy='28' r='9.5' fill='#b98a4e'/><circle cx='47' cy='28' r='9.5' fill='#b98a4e'/><circle cx='17' cy='28' r='6.6' fill='#140d07'/><circle cx='47' cy='28' r='6.6' fill='#140d07'/><circle cx='14.6' cy='25.6' r='2' fill='#fff'/><circle cx='44.6' cy='25.6' r='2' fill='#fff'/><circle cx='28.5' cy='39' r='1.4' fill='#4a2f16'/><circle cx='35.5' cy='39' r='1.4' fill='#4a2f16'/><path d='M9 47q23-6 46 0' fill='none' stroke='#4a2f16' stroke-width='2.8' stroke-linecap='round'/><path d='M12 37Q8.4 41.48 8.4 44A3.6 3.6 0 1 0 15.6 44Q15.6 41.48 12 37Z' fill='#a9def5'/><circle cx='10.7' cy='43.5' r='1.0' fill='#fff'/><path d='M52 37Q48 42.2 48 45A4 4 0 1 0 56 45Q56 42.2 52 37Z' fill='#a9def5'/><circle cx='50.6' cy='44.4' r='1.1' fill='#fff'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M45 44h3.8v12H45ZM51.2 44H55v12h-3.8Z' fill='#e9cc96'/></svg>`};const UI_ICONS={wail:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M32 9V2M17 11l-4-6M47 11l4-6' fill='none' stroke='#e9cc96' stroke-width='3.2' stroke-linecap='round'/><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><path d='M12 30l11 4.5-11 4.5M52 30l-11 4.5 11 4.5' fill='none' stroke='#2a1c0e' stroke-width='4.2' stroke-linecap='round' stroke-linejoin='round'/><path d='M20 56c1-13 23-13 24 0c-6 3.5-18 3.5-24 0Z' fill='#2a1c0e'/><path d='M15 42v20M49 42v20' fill='none' stroke='#cfe6ef' stroke-width='6.5' stroke-linecap='round'/><path d='M15 43v17M49 43v17' fill='none' stroke='#ffffff' stroke-width='1.6' stroke-linecap='round' opacity='.8'/></svg>`,stop:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><path d='M13 34q5.5 4.5 11 0M40 34q5.5 4.5 11 0' fill='none' stroke='#2a1c0e' stroke-width='3.8' stroke-linecap='round'/><path d='M27 47h10' fill='none' stroke='#2a1c0e' stroke-width='3.6' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><rect x='45' y='45' width='10' height='10' rx='1.5' fill='#e9cc96'/></svg>`,solo:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><circle cx='21' cy='34' r='2.8' fill='#2a1c0e'/><circle cx='43' cy='34' r='2.8' fill='#2a1c0e'/><path d='M27 46q5 -3 10 0' fill='none' stroke='#2a1c0e' stroke-width='3.4' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M46.5 43.5l10 6.5-10 6.5Z' fill='#e9cc96'/></svg>`,soloOn:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><circle cx='21' cy='34' r='2.8' fill='#2a1c0e'/><circle cx='43' cy='34' r='2.8' fill='#2a1c0e'/><path d='M27 46q5 -3 10 0' fill='none' stroke='#2a1c0e' stroke-width='3.4' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M45 44h3.8v12H45ZM51.2 44H55v12h-3.8Z' fill='#e9cc96'/></svg>`};
+const FROG_ICONS={solo:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M17 30c1-13 8-21 15-21s14 8 15 21Z' fill='#a5763c'/><path d='M24 14h16M21 19h22M19 24h26' fill='none' stroke='#6b4722' stroke-width='2.4' stroke-linecap='round'/><path d='M11 53l-5 7M16 55l-2 7M21 56l1 6M53 53l5 7M48 55l2 7M43 56l-1 6' fill='none' stroke='#a5763c' stroke-width='3.4' stroke-linecap='round'/><ellipse cx='32' cy='42' rx='28' ry='15' fill='#d2a466'/><path d='M4 43c2 9 13 14 28 14s26-5 28-14c-7 6-17 8-28 8S11 49 4 43Z' fill='#b98a4e'/><circle cx='17' cy='28' r='9.5' fill='#b98a4e'/><circle cx='47' cy='28' r='9.5' fill='#b98a4e'/><circle cx='17' cy='28' r='6.6' fill='#140d07'/><circle cx='47' cy='28' r='6.6' fill='#140d07'/><circle cx='14.6' cy='25.6' r='2' fill='#fff'/><circle cx='44.6' cy='25.6' r='2' fill='#fff'/><circle cx='28.5' cy='39' r='1.4' fill='#4a2f16'/><circle cx='35.5' cy='39' r='1.4' fill='#4a2f16'/><path d='M9 47q23-6 46 0' fill='none' stroke='#4a2f16' stroke-width='2.8' stroke-linecap='round'/><path d='M12 37Q8.4 41.48 8.4 44A3.6 3.6 0 1 0 15.6 44Q15.6 41.48 12 37Z' fill='#a9def5'/><circle cx='10.7' cy='43.5' r='1.0' fill='#fff'/><path d='M52 37Q48 42.2 48 45A4 4 0 1 0 56 45Q56 42.2 52 37Z' fill='#a9def5'/><circle cx='50.6' cy='44.4' r='1.1' fill='#fff'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M46.5 43.5l10 6.5-10 6.5Z' fill='#e9cc96'/></svg>`,soloOn:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M17 30c1-13 8-21 15-21s14 8 15 21Z' fill='#a5763c'/><path d='M24 14h16M21 19h22M19 24h26' fill='none' stroke='#6b4722' stroke-width='2.4' stroke-linecap='round'/><path d='M11 53l-5 7M16 55l-2 7M21 56l1 6M53 53l5 7M48 55l2 7M43 56l-1 6' fill='none' stroke='#a5763c' stroke-width='3.4' stroke-linecap='round'/><ellipse cx='32' cy='42' rx='28' ry='15' fill='#d2a466'/><path d='M4 43c2 9 13 14 28 14s26-5 28-14c-7 6-17 8-28 8S11 49 4 43Z' fill='#b98a4e'/><circle cx='17' cy='28' r='9.5' fill='#b98a4e'/><circle cx='47' cy='28' r='9.5' fill='#b98a4e'/><circle cx='17' cy='28' r='6.6' fill='#140d07'/><circle cx='47' cy='28' r='6.6' fill='#140d07'/><circle cx='14.6' cy='25.6' r='2' fill='#fff'/><circle cx='44.6' cy='25.6' r='2' fill='#fff'/><circle cx='28.5' cy='39' r='1.4' fill='#4a2f16'/><circle cx='35.5' cy='39' r='1.4' fill='#4a2f16'/><path d='M9 47q23-6 46 0' fill='none' stroke='#4a2f16' stroke-width='2.8' stroke-linecap='round'/><path d='M12 37Q8.4 41.48 8.4 44A3.6 3.6 0 1 0 15.6 44Q15.6 41.48 12 37Z' fill='#a9def5'/><circle cx='10.7' cy='43.5' r='1.0' fill='#fff'/><path d='M52 37Q48 42.2 48 45A4 4 0 1 0 56 45Q56 42.2 52 37Z' fill='#a9def5'/><circle cx='50.6' cy='44.4' r='1.1' fill='#fff'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M45 44h3.8v12H45ZM51.2 44H55v12h-3.8Z' fill='#e9cc96'/></svg>`};const BOWL_ART={
+ body:"<path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/>",
+ calm:"<circle cx='21' cy='34' r='2.8' fill='#2a1c0e'/><circle cx='43' cy='34' r='2.8' fill='#2a1c0e'/><path d='M27 46q5 -3 10 0' fill='none' stroke='#2a1c0e' stroke-width='3.4' stroke-linecap='round'/>",
+ cry:"<path d='M13 36l12-4M51 36l-12-4' fill='none' stroke='#2a1c0e' stroke-width='4.6' stroke-linecap='round'/><path d='M23 52c1.5-8 16.5-8 18 0c-4 3.6-14 3.6-18 0Z' fill='#2a1c0e'/><path d='M17 38Q12.8 43.56 12.8 46.5A4.2 4.2 0 1 0 21.2 46.5Q21.2 43.56 17 38Z' fill='#a9def5'/><circle cx='15.5' cy='45.9' r='1.2' fill='#fff'/><path d='M47 38Q42.6 42.42 42.6 45.5A4.4 4.4 0 1 0 51.4 45.5Q51.4 42.42 47 38Z' fill='#a9def5'/><circle cx='45.5' cy='44.8' r='1.2' fill='#fff'/>",
+ wail:"<path d='M32 9V2M17 11l-4-6M47 11l4-6' fill='none' stroke='#e9cc96' stroke-width='3.2' stroke-linecap='round'/><path d='M12 30l11 4.5-11 4.5M52 30l-11 4.5 11 4.5' fill='none' stroke='#2a1c0e' stroke-width='4.2' stroke-linecap='round' stroke-linejoin='round'/><path d='M20 56c1-13 23-13 24 0c-6 3.5-18 3.5-24 0Z' fill='#2a1c0e'/><path d='M15 42v20M49 42v20' fill='none' stroke='#cfe6ef' stroke-width='6.5' stroke-linecap='round'/><path d='M15 43v17M49 43v17' fill='none' stroke='#ffffff' stroke-width='1.6' stroke-linecap='round' opacity='.8'/>",
+ stopBadge:"<circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><rect x='45' y='45' width='10' height='10' rx='1.5' fill='#e9cc96'/>",
+ notes:"<path d='M37 7v14M49 4v14M37 7l12-3' fill='none' stroke='#e9cc96' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/><ellipse cx='34.2' cy='21.4' rx='3.6' ry='2.6' transform='rotate(-20 34.2 21.4)' fill='#e9cc96'/><ellipse cx='46.2' cy='18.4' rx='3.6' ry='2.6' transform='rotate(-20 46.2 18.4)' fill='#e9cc96'/>"
+};
+const FROG_BODY=frogToggleIcon.replace(/^<svg[^>]*>/,'').replace(/<\/svg>$/,'');
+/* 모드 스위치 아이콘: 그림이 곧 그 모드에서 일어나는 일 — 멈춤(네모), 볼 하나가 혼자 욺, 볼 위에 음표, 세 볼이 함께 울부짖음 / 개구리 멈춤, 나뭇가지로 등 긁기, 개구리와 음표 */
+const MODE_ICONS={
+ bowl:{
+  stop:`<svg viewBox='0 0 64 64' aria-hidden='true'>${BOWL_ART.body}${BOWL_ART.calm}${BOWL_ART.stopBadge}</svg>`,
+  solo:`<svg viewBox='0 0 64 64' aria-hidden='true'>${BOWL_ART.body}${BOWL_ART.cry}</svg>`,
+  song:`<svg viewBox='0 0 64 64' aria-hidden='true'><g transform='translate(4 13) scale(.78)'>${BOWL_ART.body}${BOWL_ART.calm}</g>${BOWL_ART.notes}</svg>`,
+  wail:`<svg viewBox='0 0 64 64' aria-hidden='true'><g transform='translate(-3 3) scale(.5)'>${BOWL_ART.body}${BOWL_ART.wail}</g><g transform='translate(35 3) scale(.5)'>${BOWL_ART.body}${BOWL_ART.wail}</g><g transform='translate(10 15) scale(.68)'>${BOWL_ART.body}${BOWL_ART.wail}</g></svg>`
+ },
+ frog:{
+  stop:`<svg viewBox='0 0 64 64' aria-hidden='true'>${FROG_BODY}${BOWL_ART.stopBadge}</svg>`,
+  solo:`<svg viewBox='0 0 64 64' aria-hidden='true'>${FROG_BODY}<path d='M2 27Q30 30 62 8' fill='none' stroke='#8a6a44' stroke-width='4' stroke-linecap='round'/><path d='M2 27Q30 30 62 8' fill='none' stroke='#c9a06a' stroke-width='1.4' stroke-linecap='round' opacity='.7'/></svg>`,
+  groove:`<svg viewBox='0 0 64 64' aria-hidden='true'><g transform='translate(0 8) scale(.86)'>${FROG_BODY}</g><g transform='translate(12 -1)'>${BOWL_ART.notes}</g></svg>`
+ }
+};
+const UI_ICONS={wail:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M32 9V2M17 11l-4-6M47 11l4-6' fill='none' stroke='#e9cc96' stroke-width='3.2' stroke-linecap='round'/><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><path d='M12 30l11 4.5-11 4.5M52 30l-11 4.5 11 4.5' fill='none' stroke='#2a1c0e' stroke-width='4.2' stroke-linecap='round' stroke-linejoin='round'/><path d='M20 56c1-13 23-13 24 0c-6 3.5-18 3.5-24 0Z' fill='#2a1c0e'/><path d='M15 42v20M49 42v20' fill='none' stroke='#cfe6ef' stroke-width='6.5' stroke-linecap='round'/><path d='M15 43v17M49 43v17' fill='none' stroke='#ffffff' stroke-width='1.6' stroke-linecap='round' opacity='.8'/></svg>`,stop:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><path d='M13 34q5.5 4.5 11 0M40 34q5.5 4.5 11 0' fill='none' stroke='#2a1c0e' stroke-width='3.8' stroke-linecap='round'/><path d='M27 47h10' fill='none' stroke='#2a1c0e' stroke-width='3.6' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><rect x='45' y='45' width='10' height='10' rx='1.5' fill='#e9cc96'/></svg>`,solo:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><circle cx='21' cy='34' r='2.8' fill='#2a1c0e'/><circle cx='43' cy='34' r='2.8' fill='#2a1c0e'/><path d='M27 46q5 -3 10 0' fill='none' stroke='#2a1c0e' stroke-width='3.4' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M46.5 43.5l10 6.5-10 6.5Z' fill='#e9cc96'/></svg>`,soloOn:`<svg viewBox='0 0 64 64' aria-hidden='true'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><circle cx='21' cy='34' r='2.8' fill='#2a1c0e'/><circle cx='43' cy='34' r='2.8' fill='#2a1c0e'/><path d='M27 46q5 -3 10 0' fill='none' stroke='#2a1c0e' stroke-width='3.4' stroke-linecap='round'/><circle cx='50' cy='50' r='12.5' fill='#14181d' stroke='#e9cc96' stroke-width='1.8'/><path d='M45 44h3.8v12H45ZM51.2 44H55v12h-3.8Z' fill='#e9cc96'/></svg>`};
 /* 바닥에 깔리는 음: 라와 미만으로 비워 두고, 맥놀이와 어두운 바람을 얹는다. 10초 주기로 숨 쉬듯 부푼다. */
 AudioEngine.prototype.buildDrone=function(){
  const c=this.ctx,d=this.drone={};
@@ -1731,7 +1880,7 @@ AudioEngine.prototype.buildDrone=function(){
 };
 AudioEngine.prototype.tickDrone=function(sum){
  const d=this.drone;if(!d)return;const t=this.ctx.currentTime,lvl=clamp(Math.max(sum/3.2,this.wailLevel||0));
- d.out.gain.setTargetAtTime(PLAY.drone.level*(1+PLAY.drone.rise*lvl),t,1.4);d.tone.frequency.setTargetAtTime(lerp(720,430,lvl),t,1.6);
+ auto(d.out.gain,PLAY.drone.level*(1+PLAY.drone.rise*lvl),t,1.4,.003);auto(d.tone.frequency,lerp(720,430,lvl),t,1.6,1);
 };
 /* 달래기: 단계와 소리가 함께 빠르게 잦아든다 */
 BowlVoice.prototype.calm=function(dt){
@@ -1741,30 +1890,91 @@ BowlVoice.prototype.calm=function(dt){
 };
 {
  const hit0=App.prototype.hit,damp0=App.prototype.damp;
- App.prototype.setupPlay=function(){this.wail={active:false,t0:0,next:Array(8).fill(0),count:Array(8).fill(0)};this.solo={on:false,queue:[],rest:0,lastSwell:-99};this.lastTouch=-99;this.refreshButtons();};
+ App.prototype.setupPlay=function(){this.wail={active:false,t0:0,next:Array(8).fill(0),count:Array(8).fill(0)};this.solo={on:false,queue:[],rest:0,lastSwell:-99};this.lastTouch=-99;this.mode='stop';this.frogMode='stop';this.song={events:[],idx:0,clock:0,length:0,loops:0,paused:false};this.groove=null;this.refreshButtons();};
  App.prototype.refreshButtons=function(){
-  const w=$('#dampMini'),s=$('#soloCry');if(!w||!s)return;
-  w.innerHTML=this.wail.active?UI_ICONS.stop:UI_ICONS.wail;w.classList.toggle('active',this.wail.active);w.setAttribute('aria-label',this.wail.active?'모두 멈추기':'다 같이 울기');
-  const fi=this.scene?.appendix?FROG_ICONS:UI_ICONS;s.innerHTML=this.solo.on?fi.soloOn:fi.solo;s.classList.toggle('active',this.solo.on);s.setAttribute('aria-pressed',String(this.solo.on));
+  if(!this.wail)return;const bm=$('#bowlModes'),fm=$('#frogModes');if(!bm||!fm)return;
+  const active=this.wail.active?'wail':this.mode;
+  for(const b of bm.querySelectorAll('button')){const m=b.dataset.mode;if(!b.innerHTML)b.innerHTML=MODE_ICONS.bowl[m];b.classList.toggle('active',m===active);b.setAttribute('aria-pressed',String(m===active));}
+  for(const b of fm.querySelectorAll('button')){const m=b.dataset.mode;if(!b.innerHTML)b.innerHTML=MODE_ICONS.frog[m];b.classList.toggle('active',m===this.frogMode);b.setAttribute('aria-pressed',String(m===this.frogMode));}
+  const ap=!!this.scene?.appendix;bm.hidden=ap;fm.hidden=!ap;
  };
- /* 직접 치면 혼자 울기는 잠깐 쉰다 */
- App.prototype.hit=function(i,strength){if(this.solo){this.lastTouch=this.time;this.solo.queue.length=0;}return hit0.call(this,i,strength);};
+ App.prototype.setCaps=function(c){if(!this.audio.ready)return;for(const v of this.audio.voices)v.crySequence.setCap(c);};
+ /* 직접 치면 자동 연주(혼자 울기·곡)는 잠깐 쉬고, 곡 연주의 단계 제한도 풀린다 */
+ App.prototype.hit=function(i,strength){if(this.solo){this.lastTouch=this.time;this.solo.queue.length=0;}if(this.song&&this.mode==='song'&&!this.song.paused){this.song.paused=true;this.setCaps(CRY_MAX);}return hit0.call(this,i,strength);};
  App.prototype.autoStrike=function(i,strength,mallet){
-  if(!this.audio.ready||this.scene.appendix)return;
+  if(!this.audio.ready)return;
+  if(this.scene.appendix){if(this.scene.ensembleA<.001)return;mallet=false;}
   if(mallet)return hit0.call(this,i,strength);
-  const t=this.audio.ctx.currentTime;this.audio.hit(i,strength,.10);this.scene.bowls[i].hitAt=t+.10;this.scene.rings.push({id:i,t:t+.1,strength});if(this.scene.rings.length>22)this.scene.rings.shift();
+  const t=this.time+this.audio.lag();this.audio.hit(i,strength,.10);this.scene.bowls[i].hitAt=t+.10;this.scene.rings.push({id:i,t:t+.1,strength});if(this.scene.rings.length>22)this.scene.rings.shift();
  };
- App.prototype.startWail=function(natural){const w=this.wail,t=this.time;w.active=true;w.t0=t;w.count.fill(0);for(let i=0;i<8;i++)w.next[i]=t+(natural?Math.random()*.4:.1*i);this.solo.queue.length=0;this.refreshButtons();};
- App.prototype.toggleWail=async function(){
+ App.prototype.startWail=function(natural){const w=this.wail,t=this.time;w.active=true;w.t0=t;w.count.fill(0);for(let i=0;i<8;i++)w.next[i]=t+(natural?Math.random()*.4:.1*i);this.solo.queue.length=0;this.setCaps(CRY_MAX);this.refreshButtons();};
+ /* 볼 모드 스위치: 멈춤 · 혼자 울기 · 곡 연주 · 다 같이 울기 */
+ App.prototype.setMode=async function(m){
   await this.start();if(!this.audio.ready||this.scene.appendix)return;if(!this.wail)this.setupPlay();
-  if(this.wail.active){this.damp();this.solo.on=false;this.audio.uiTing('close');}else this.startWail(false);
-  this.refreshButtons();
+  const was=this.mode;
+  if(m==='stop'){this.damp();this.mode='stop';}
+  else if(m==='wail'){this.mode='wail';this.stopSong();if(!this.wail.active)this.startWail(false);}
+  else{this.wail.active=false;this.mode=m;if(m==='song')this.startSong();else this.stopSong();}
+  this.solo.queue.length=0;this.solo.rest=this.time+.6;this.lastTouch=-99;
+  this.audio.uiTing(m==='stop'?'close':'open');this.refreshButtons();
  };
- App.prototype.toggleSolo=async function(){
+ /* 개구리 모드 스위치: 멈춤 · 혼자 긁기 · 리듬 */
+ App.prototype.setFrogMode=async function(m){
   await this.start();if(!this.audio.ready)return;if(!this.wail)this.setupPlay();
-  this.solo.on=!this.solo.on;this.solo.queue.length=0;this.solo.rest=this.time+.6;this.lastTouch=-99;this.audio.uiTing(this.solo.on?'open':'close');this.refreshButtons();
+  this.frogMode=m;this.solo.queue.length=0;this.solo.rest=this.time+.6;this.lastTouch=-99;
+  if(m==='groove')this.startGroove();else this.stopGroove();
+  this.audio.uiTing(m==='stop'?'close':'open');this.refreshButtons();
  };
- App.prototype.damp=function(){damp0.call(this);if(this.wail){this.wail.active=false;this.refreshButtons();}if(this.solo)this.solo.queue.length=0;}; App.prototype.frogScrape=function(force){if(!this.audio.ready||!this.scene.appendix)return;this.audio.scraper.stroke(force);this.scene.creature.stroke();}; App.prototype.composeFrogPhrase=function(){const s=this.solo;let t=this.time+.3;if(this.time-s.lastSwell>PLAY.frog.swellEvery&&Math.random()<.25){s.lastSwell=this.time;const n=5+Math.floor(Math.random()*3);for(let k=0;k<n;k++){s.queue.push({at:t,frog:true,s:.45+.4*k/(n-1)});t+=.95+Math.random()*.35;}s.rest=t+9+Math.random()*5;}else{const n=1+Math.floor(Math.random()*3);for(let k=0;k<n;k++){s.queue.push({at:t,frog:true,s:.4+Math.random()*.25});t+=1.4+Math.random()*.7;}s.rest=t+4+Math.random()*5;}}; App.prototype.frogTick=function(){const s=this.solo,sc=this.scene,t=this.time;if([...this.pointers.values()].some(p=>p.mode==='scrape')){this.lastTouch=t;s.queue.length=0;}if(!s.on||t<this.lastTouch+PLAY.frog.pause)return;if(!s.queue.length&&t>=s.rest)this.composeFrogPhrase();while(s.queue.length&&s.queue[0].at<=t){const n=s.queue.shift();if(n.frog&&sc.creature.lv<PLAY.frog.max)this.frogScrape(n.s);}};
+ App.prototype.damp=function(){damp0.call(this);if(this.wail){this.wail.active=false;this.mode='stop';}if(this.solo)this.solo.queue.length=0;this.stopSong();this.refreshButtons();};
+ /* ---- 곡 연주 ---- */
+ App.prototype.genSong=function(){
+  const s=this.song,B=60/SONG.bpm,ev=[];
+  SONG.bars.forEach((bar,b)=>{for(const [beat,i,str] of bar){const at=(b*4+(beat-1))*B+(Math.random()-.5)*.05,st=str*(.94+.12*Math.random());ev.push({at,i,s:st});
+   if(i>=5&&Math.random()<.14)ev.push({at:at-.09,i:i===5?6:i-1,s:st*.55});}});   // 가끔 붙는 꾸밈음
+  ev.sort((a,b)=>a.at-b.at);s.events=ev;s.idx=0;s.clock=-1.0;s.length=SONG.bars.length*4*B;
+ };
+ App.prototype.startSong=function(){this.genSong();this.song.paused=false;this.setCaps(PLAY.song.cap);};
+ App.prototype.stopSong=function(){if(this.song&&this.mode!=='song')this.setCaps(CRY_MAX);};
+ App.prototype.songTick=function(dt){
+  const s=this.song,t=this.time;
+  if(t<this.lastTouch+PLAY.solo.pause){s.paused=true;return;}
+  if(s.paused){s.paused=false;this.setCaps(PLAY.song.cap);}
+  s.clock+=dt;
+  while(s.idx<s.events.length&&s.events[s.idx].at<=s.clock){const ev=s.events[s.idx++];if(s.clock-ev.at<.6)this.autoStrike(ev.i,ev.s,true);}
+  if(s.idx>=s.events.length&&s.clock>=s.length+SONG.rest){s.loops++;this.genSong();}
+ };
+ /* ---- 개구리 리듬 ---- */
+ App.prototype.startGroove=function(){
+  const G=GROOVES[Math.floor(Math.random()*GROOVES.length)];
+  this.groove={g:G,beat:60/G.bpm,len:8*60/G.bpm,clock:-.4,si:0,ci:0,bi:0,chi:0,listen:0,appear:PLAY.ensemble.after[0]+Math.random()*(PLAY.ensemble.after[1]-PLAY.ensemble.after[0]),dir:1,k:.55,loops:0,paused:false};
+  this.scene.creature.sweepK=.55;
+ };
+ App.prototype.stopGroove=function(){this.groove=null;this.scene.ensembleOn=false;this.scene.creature.grooveHold=false;this.setCaps(CRY_MAX);};
+ App.prototype.grooveTick=function(dt){
+  const g=this.groove,sc=this.scene,a=this.audio,t=this.time;if(!g||this.frogMode!=='groove'||!sc.appendix)return;
+  if([...this.pointers.values()].some(p=>p.mode==='scrape'))this.lastTouch=t;
+  if(t<this.lastTouch+PLAY.frog.pause){if(!g.paused){g.paused=true;g.listen=0;sc.ensembleOn=false;sc.creature.grooveHold=false;}return;}
+  if(g.paused){g.paused=false;g.clock=-.4;g.si=g.ci=g.bi=g.chi=0;}
+  sc.creature.grooveHold=true;
+  g.listen+=dt;if(!sc.ensembleOn&&g.listen>=g.appear){sc.ensembleOn=true;this.setCaps(PLAY.ensemble.cap);}
+  g.clock+=dt;const G=g.g,B=g.beat,cr=sc.creature;
+  /* 볼 소리는 0.1초 뒤에 나므로(마치가 날아가는 시간) 볼 이벤트는 그만큼 먼저 건다 */
+  const fire=(list,ptr,fn,lead=0)=>{while(g[ptr]<list.length&&list[g[ptr]][0]*B-lead<=g.clock){const ev=list[g[ptr]++];if(fn&&g.clock-(ev[0]*B-lead)<.3)fn(ev);}};
+  fire(G.strokes,'si',ev=>{
+   const long=ev[1]==='l',acc=ev[2]||0,force=(long?.60:.52)*(1+.22*acc)*(.92+.16*Math.random()),dur=long?G.long*B:.075,teeth=long?13:4;
+   let to;if(long){to=g.dir>0?Math.min(1,g.k+.75):Math.max(0,g.k-.75);if(Math.abs(to-g.k)<.5){g.dir=-g.dir;to=g.dir>0?Math.min(1,g.k+.75):Math.max(0,g.k-.75);}}
+   else{to=g.k+g.dir*.26;if(to>1||to<0){g.dir=-g.dir;to=g.k+g.dir*.26;}}
+   g.dir=Math.sign(to-g.k)||g.dir;g.k=to;cr.sweep(to,dur);a.scraper.strum(force,teeth,dur);cr.beat(acc?.55:.25);
+  });
+  fire(G.croak,'ci',ev=>{a.scraper.knock(ev[1]);cr.beat(1);cr.mouthPop(.35+.3*ev[1]);});
+  const ens=sc.ensembleA>.15;
+  fire(G.bowls,'bi',ens?ev=>this.autoStrike(ev[1],ev[2],false):null,.1);
+  fire(G.chords,'chi',ens?ev=>{[5,6,7].forEach((i,k)=>this.autoStrike(i,ev[1]*[1,.9,.85][k],false));}:null,.1);
+  if(g.clock>=g.len){g.clock-=g.len;g.si=g.ci=g.bi=g.chi=0;g.loops++;}
+ };
+ App.prototype.frogScrape=function(force){if(!this.audio.ready||!this.scene.appendix)return;this.audio.scraper.stroke(force);this.scene.creature.stroke();};
+ App.prototype.composeFrogPhrase=function(){const s=this.solo;let t=this.time+.3;if(this.time-s.lastSwell>PLAY.frog.swellEvery&&Math.random()<.25){s.lastSwell=this.time;const n=5+Math.floor(Math.random()*3);for(let k=0;k<n;k++){s.queue.push({at:t,frog:true,s:.45+.4*k/(n-1)});t+=.95+Math.random()*.35;}s.rest=t+9+Math.random()*5;}else{const n=1+Math.floor(Math.random()*3);for(let k=0;k<n;k++){s.queue.push({at:t,frog:true,s:.4+Math.random()*.25});t+=1.4+Math.random()*.7;}s.rest=t+4+Math.random()*5;}};
+ App.prototype.frogTick=function(){const s=this.solo,sc=this.scene,t=this.time;if([...this.pointers.values()].some(p=>p.mode==='scrape')){this.lastTouch=t;s.queue.length=0;}if(this.frogMode!=='solo'||t<this.lastTouch+PLAY.frog.pause)return;if(!s.queue.length&&t>=s.rest)this.composeFrogPhrase();while(s.queue.length&&s.queue[0].at<=t){const n=s.queue.shift();if(n.frog&&sc.creature.lv<PLAY.frog.max)this.frogScrape(n.s);}};
  /* 한 볼이 두세 번 훌쩍이면 옆 볼이 받아 준다. 가끔 한 볼이 혼자 북받쳤다가 잦아든다. 절정까지는 가지 않는다. */
  App.prototype.composePhrase=function(){
   const s=this.solo,v=this.audio.voices,lead=Math.random()<.7?Math.floor(Math.random()*5):5+Math.floor(Math.random()*3),near=(lead+(Math.random()<.5?1:7))%8;let t=this.time+.4;
@@ -1781,7 +1991,8 @@ BowlVoice.prototype.calm=function(dt){
  App.prototype.playTick=function(dt){
   if(!this.wail)this.setupPlay();
   const a=this.audio,w=this.wail,s=this.solo,sc=this.scene;
-  if(this.soloMode!==sc.appendix){this.soloMode=sc.appendix;s.queue.length=0;s.rest=this.time+1;this.refreshButtons();}if(!a.ready)return;if(sc.appendix){sc.wailPull=lerp(sc.wailPull||0,0,1-Math.exp(-dt*.8));a.wailLevel=0;this.frogTick();return;}
+  if(this.soloMode!==sc.appendix){this.soloMode=sc.appendix;s.queue.length=0;s.rest=this.time+1;this.refreshButtons();}if(!a.ready)return;
+  if(sc.appendix){sc.wailPull=lerp(sc.wailPull||0,0,1-Math.exp(-dt*.8));a.wailLevel=0;sc.creature.grooveHold=false;this.frogTick();this.grooveTick(dt);return;}
   const t=this.time,now=performance.now();
   /* 달래기: 울고 있는 볼에 손을 얹고 가만히 있으면 그 볼만 잦아든다 */
   for(const p of this.pointers.values())if(p.mode==='bowl'&&now-p.t0>PLAY.soothe.after*1000&&Math.hypot(p.x-p.x0,p.y-p.y0)<PLAY.soothe.still)a.voices[p.bowl].calm(dt);
@@ -1789,15 +2000,17 @@ BowlVoice.prototype.calm=function(dt){
   if(!w.active&&a.voices.filter(v=>v.lv>=PLAY.wail.stage).length>=PLAY.wail.need)this.startWail(true);
   if(w.active){
    if(t-w.t0<PLAY.wail.feed){for(let i=0;i<8;i++)if(t>=w.next[i]){const lv=a.voices[i].lv;this.autoStrike(i,clamp(.6+.08*w.count[i],.6,1.1),false);w.count[i]++;w.next[i]=t+(lv<6.4?.48+.1*Math.random():1.2+.8*Math.random());}}
-   else if(a.voices.every(v=>v.lv<.6)){w.active=false;this.refreshButtons();}
+   else if(a.voices.every(v=>v.lv<.6)){w.active=false;if(this.mode==='wail')this.mode='stop';this.refreshButtons();}
   }
   a.wailLevel=lerp(a.wailLevel||0,w.active&&t-w.t0<PLAY.wail.feed+4?1:0,1-Math.exp(-dt*.5));
   sc.wailPull=lerp(sc.wailPull||0,w.active&&t-w.t0<PLAY.wail.feed+2?1:0,1-Math.exp(-dt*.35));
   /* 혼자 울기 */
-  if(s.on&&!w.active&&t>=this.lastTouch+PLAY.solo.pause){
+  if(this.mode==='solo'&&!w.active&&t>=this.lastTouch+PLAY.solo.pause){
    if(!s.queue.length&&t>=s.rest)this.composePhrase();
    while(s.queue.length&&s.queue[0].at<=t){const n=s.queue.shift();if(!n.frog&&a.voices[n.i]&&a.voices[n.i].lv<5.6)this.autoStrike(n.i,n.s,true);}
   }
+  /* 곡 연주 */
+  if(this.mode==='song'&&!w.active)this.songTick(dt);
  };
 }
 
