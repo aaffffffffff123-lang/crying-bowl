@@ -699,7 +699,7 @@ class BowlVoice{
   this.engine=engine;this.ctx=engine.ctx;this.id=id;this.freq=NOTES[id].freq;this.last=-100;this.strength=0;this.rub=0;this.level=0;
   this.crySequence=new CryStageSequence();this.stage=0;this.lv=0;this.k=0;
   let c=this.ctx;this.output=c.createGain();this.output.gain.value=0;this.pan=c.createStereoPanner();this.pan.pan.value=[.08,-.55,-.33,.55,.35,-.25,.1,.3][id];this.output.connect(this.pan);
-  this.balance=c.createGain();this.balance.gain.value=id<5?8.4:6.2;
+  this.balance=c.createGain();this.balance.gain.value=id<5?3.8:2.8;
   this.pan.connect(this.balance);this.balance.connect(engine.bus);
   this.send=c.createGain();this.send.gain.value=.30;this.balance.connect(this.send);this.send.connect(engine.convolver);
   this.metal=c.createGain();this.metal.gain.value=.54;this.metal.connect(this.output);this.osc=[];this.mod=[];
@@ -773,9 +773,9 @@ class AudioEngine{
   this.bus=c.createGain();this.bus.gain.value=1;this.master=c.createGain();this.master.gain.value=this.volume;
   this.lowcut=c.createBiquadFilter();this.lowcut.type='highpass';this.lowcut.frequency.value=40;
   this.highcut=c.createBiquadFilter();this.highcut.type='lowpass';this.highcut.frequency.value=5400;
-  this.compressor=c.createDynamicsCompressor();this.compressor.threshold.value=-17;this.compressor.knee.value=18;this.compressor.ratio.value=8;this.compressor.attack.value=.004;this.compressor.release.value=.32;
-  this.limiter=c.createWaveShaper();let curve=new Float32Array(4096);for(let i=0;i<4096;i++){let x=i/4095*2-1;curve[i]=Math.tanh(x*1.05)*.88;}this.limiter.curve=curve;this.limiter.oversample='2x';
-  this.bus.connect(this.lowcut);this.lowcut.connect(this.highcut);this.highcut.connect(this.compressor);this.compressor.connect(this.limiter);this.limiter.connect(this.master);this.master.connect(c.destination);
+  this.compressor=c.createDynamicsCompressor();this.compressor.threshold.value=-12;this.compressor.knee.value=10;this.compressor.ratio.value=3;this.compressor.attack.value=.02;this.compressor.release.value=.28;
+  this.limiter=c.createWaveShaper();let curve=new Float32Array(4096);for(let i=0;i<4096;i++){let x=i/4095*2-1;{const a=Math.abs(x)*2;curve[i]=Math.sign(x)*(a<=.7?a:.7+.27*Math.tanh((a-.7)/.27));}}this.limiter.curve=curve;this.limiter.oversample='2x';
+  this.bus.connect(this.lowcut);this.lowcut.connect(this.highcut);this.highcut.connect(this.master);this.master.connect(this.compressor);this.limitIn=c.createGain();this.limitIn.gain.value=.5;this.compressor.connect(this.limitIn);this.limitIn.connect(this.limiter);this.limiter.connect(c.destination);
   this.convolver=c.createConvolver();const seconds=4.8,buffer=c.createBuffer(2,Math.ceil(c.sampleRate*seconds),c.sampleRate);let rand=()=>{this.seed=(this.seed*1664525+1013904223)>>>0;return this.seed/4294967296;};this.seed=93751;
   for(let ch=0;ch<2;ch++){let d=buffer.getChannelData(ch),last=0;for(let i=0;i<d.length;i++){let t=i/c.sampleRate;last=last*.65+(rand()*2-1)*.35;d[i]=last*Math.pow(1-t/seconds,3.6)*Math.min(1,t/.018);}}
   this.convolver.buffer=buffer;this.wet=c.createGain();this.wet.gain.value=this.room;this.convolver.connect(this.wet);this.wet.connect(this.bus);
@@ -908,6 +908,88 @@ class BabyVoice extends BowlVoice{
  energy(t){const age=t-this.last;if(age<0)return this.level;return clamp(this.strength*(1-Math.exp(-age*95))*Math.exp(-age/(2.65-(this.id-5)*.3))+this.rub*.6+(this.carry||0)*Math.exp(-age*40),0,1.2);}
  tick(t){const e=super.tick(t),age=Math.max(0,t-this.last);this.output.gain.setTargetAtTime(e*.65*(1-.24*(this.k||0)),t,.012);this.metal.gain.setTargetAtTime(.63,t,.06);this.vocal.gain.setTargetAtTime((.016+this.cryNow(t)*.082)*(.65+.35*clamp(age*6)),t,.03);return e;}
  damp(){super.damp();this.carry=0;}
+}
+
+/* ===== 단계별 울음 소리 =====
+ * 표정(CRY_POSES)과 똑같이 일곱 단계로 소리가 바뀝니다. 단계 사이 값은 부드럽게 이어집니다.
+ * 나중에 조율할 때는 아래 표의 숫자만 바꾸면 됩니다.
+ *  voice  목소리를 얼마나 더 키울지 (1단계는 0 = 지금 소리 그대로)
+ *  vowel  입이 벌어지는 정도 (0 '으' → 1 '아')
+ *  bright 힘을 줘서 거칠어진 목소리
+ *  oct    한 옥타브 위로 뒤집히는 목소리
+ *  breath 숨소리
+ *  sob    흑흑 끊기는 떨림의 깊이
+ *  bend   칠 때마다 음이 치솟았다가 떨어지는 폭
+ *  grit   찢어지는 소리(지지직). 마지막 단계에만 있습니다.
+ */
+const CRY_SOUND=[
+ {voice:0,   vowel:0,  bright:0,  oct:0,  breath:0,  sob:0,  bend:0,  grit:0},   // 0 고요
+ {voice:0,   vowel:0,  bright:0,  oct:0,  breath:0,  sob:0,  bend:0,  grit:0},   // 1 힝
+ {voice:.25, vowel:.14,bright:.05,oct:0,  breath:.30,sob:.45,bend:.14,grit:0},   // 2 흑흑
+ {voice:.50, vowel:.30,bright:.16,oct:.04,breath:.42,sob:.60,bend:.30,grit:0},   // 3 흑윽
+ {voice:.75, vowel:.48,bright:.34,oct:.16,breath:.48,sob:.52,bend:.48,grit:0},   // 4 크으
+ {voice:1.0, vowel:.68,bright:.55,oct:.40,breath:.46,sob:.44,bend:.66,grit:0},   // 5 크앙
+ {voice:1.2, vowel:.86,bright:.78,oct:.72,breath:.40,sob:.36,bend:.84,grit:.08}, // 6 끄아아
+ {voice:1.4, vowel:1,  bright:1,  oct:1,  breath:.34,sob:.28,bend:1,  grit:1}    // 7 절규
+];
+function sampleCrySound(level){
+ const v=clamp(Number.isFinite(level)?level:0,0,CRY_MAX),i=Math.min(CRY_MAX-1,Math.floor(v)),a=CRY_SOUND[i],b=CRY_SOUND[i+1],f=v-i,out={};
+ for(const k in a)out[k]=lerp(a[k],b[k],f);
+ return out;
+}
+BowlVoice.prototype.buildCry=function(){
+ const c=this.ctx,E=this.engine,size=.88+this.id*.07,y=this.cry={set:-1,sobHz:3.3+this.id*.17};
+ /* 기존 목소리를 단계만큼 더 키우는 길. 흑흑 떨림은 이 길에만 걸린다. */
+ y.boost=c.createGain();y.boost.gain.value=0;this.vocal.connect(y.boost);y.boost.connect(this.output);
+ y.sobLfo=c.createOscillator();y.sobLfo.frequency.value=y.sobHz;y.sobDepth=c.createGain();y.sobDepth.gain.value=0;y.sobLfo.connect(y.sobDepth);y.sobDepth.connect(y.boost.gain);y.sobLfo.start();
+ /* 힘준 목소리(같은 음)와 뒤집힌 목소리(옥타브 위). 기존 포먼트 필터를 같이 쓴다. */
+ const wave=p=>{const re=new Float32Array(33),im=new Float32Array(33);for(let n=1;n<33;n++)im[n]=Math.pow(n,-p)*(n%2?1:.8);return c.createPeriodicWave(re,im);};
+ y.src=c.createGain();y.src.gain.value=1;for(const f of this.formants)y.src.connect(f);
+ y.shout=c.createBiquadFilter();y.shout.type='bandpass';y.shout.frequency.value=Math.min(4200,2850*size);y.shout.Q.value=2.6;y.shoutGain=c.createGain();y.shoutGain.gain.value=1.3;y.src.connect(y.shout);y.shout.connect(y.shoutGain);y.shoutGain.connect(this.vocal);
+ for(const [key,mult,p] of [['bright',1,.92],['oct',2,1.0]]){const o=c.createOscillator(),g=c.createGain();o.setPeriodicWave(wave(p));o.frequency.value=this.freq*mult;g.gain.value=0;o.connect(g);g.connect(y.src);o.start();y[key]=o;y[key+'Gain']=g;}
+ for(const m of this.mod)if(m.param===this.glottal.detune){m.g.connect(y.bright.detune);m.g.connect(y.oct.detune);}
+ /* 숨소리: 모든 볼이 같은 잡음 버퍼를 서로 다른 지점부터 돌려 쓴다. */
+ if(!E.cryNoise){const n=c.createBuffer(1,Math.floor(c.sampleRate*2.7),c.sampleRate),d=n.getChannelData(0),r=seeded(60411);for(let i=0;i<d.length;i++)d[i]=r()*2-1;E.cryNoise=n;}
+ y.noise=c.createBufferSource();y.noise.buffer=E.cryNoise;y.noise.loop=true;y.air=c.createBiquadFilter();y.air.type='bandpass';y.air.frequency.value=1150*size;y.air.Q.value=.8;y.breath=c.createGain();y.breath.gain.value=0;
+ y.noise.connect(y.air);y.air.connect(y.breath);y.breath.connect(y.boost);y.noise.start(0,this.id*.31);
+ y.f0=this.formants.map(f=>f.frequency.value);
+};
+BowlVoice.prototype.buildGrit=function(){
+ const c=this.ctx,y=this.cry,n=2049,curve=new Float32Array(n);
+ for(let i=0;i<n;i++){const x=i/(n-1)*2-1;curve[i]=(Math.tanh(3.4*x+.28)-Math.tanh(.28))/1.04;}
+ y.drive=c.createGain();y.drive.gain.value=0;y.shaper=c.createWaveShaper();y.shaper.curve=curve;y.shaper.oversample='2x';y.grit=c.createGain();y.grit.gain.value=0;
+ this.output.connect(y.drive);y.drive.connect(y.shaper);y.shaper.connect(y.grit);y.grit.connect(this.throb);
+};
+BowlVoice.prototype.cryStage=function(t){
+ const y=this.cry,lv=this.engine.original?Math.min(this.lv,1):this.lv;
+ if(Math.abs(lv-y.set)<.008)return;y.set=lv;
+ const s=sampleCrySound(lv),small=this.id>4?.6:1;
+ y.boost.gain.setTargetAtTime(s.voice,t,.09);y.sobDepth.gain.setTargetAtTime(s.voice*s.sob,t,.09);
+ y.sobLfo.frequency.setTargetAtTime(y.sobHz*(1+.5*s.vowel),t,.3);
+ y.brightGain.gain.setTargetAtTime(s.bright*CRY_MIX.bright,t,.09);y.octGain.gain.setTargetAtTime(s.oct*CRY_MIX.oct*small,t,.09);
+ y.breath.gain.setTargetAtTime(s.breath*CRY_MIX.breath,t,.12);
+ const open=[.62,.20,.12];this.formants.forEach((f,i)=>f.frequency.setTargetAtTime(y.f0[i]*(1+open[i]*s.vowel),t,.12));
+ if(s.grit>.004&&!y.shaper)this.buildGrit();
+ if(y.shaper){y.drive.gain.setTargetAtTime(s.grit*CRY_MIX.drive,t,.07);y.grit.gain.setTargetAtTime(s.grit*CRY_MIX.grit,t,.07);}
+};
+const CRY_MIX={bright:.40,oct:.40,breath:.02,drive:2.5,grit:.11};
+{
+ const tick0=BowlVoice.prototype.tick,hit0=BowlVoice.prototype.hit;
+ BowlVoice.prototype.tick=function(t){const e=tick0.call(this,t);if(!this.cry)this.buildCry();this.cryStage(t);return e;};
+ BowlVoice.prototype.hit=function(strength=.75,when=this.ctx.currentTime){
+  hit0.call(this,strength,when);
+  if(!this.cry||this.engine.original)return;
+  /* 이번 타격이 닿았을 때의 단계로 음의 굴곡을 정한다: 아래에서 치솟았다가 길게 떨어진다. */
+  const b=sampleCrySound(Math.min(CRY_MAX,this.crySequence.target+this.crySequence.queue.length)).bend;
+  if(b<.01)return;
+  for(const p of [this.glottal.detune,this.cry.bright.detune,this.cry.oct.detune]){
+   p.cancelScheduledValues(when);p.setValueAtTime(38*strength*(1-b)-90*b,when);
+   p.linearRampToValueAtTime(38*strength+230*b*b,when+.004+.14*b);
+   p.setTargetAtTime(-45*b,when+.004+.14*b,.5+.5*b);p.setTargetAtTime(0,when+2.6,.9);
+  }
+ };
+ /* 단계가 오를수록 목소리의 떨림(비브라토)이 넓어진다. */
+ BowlVoice.prototype.sway=function(m,k){return m.param===this.throb.gain?1+1.7*k:m.param===this.glottal.detune?1+1.6*k+3*k*k:1+.45*k;};
 }
 
 // Nonlinear remeshing changes the creature's entire skull, not just its material.
@@ -1493,7 +1575,7 @@ class App{
   for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,e=>this.release(e.pointerId));
   canvas.addEventListener('contextmenu',e=>e.preventDefault());
   canvas.addEventListener('wheel',e=>{e.preventDefault();this.scene.zoom(Math.exp(clamp(e.deltaY,-150,150)*.0014));},{passive:false});
-  canvas.addEventListener('dblclick',e=>{if(!this.scene.appendix&&this.scene.pick(e.clientX,e.clientY)===null)this.scene.resetCamera();});
+  
   window.addEventListener('keydown',async e=>{
    if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)||document.activeElement.isContentEditable)return;
    if(e.key==='Escape'){if(!$('#settings').hidden)this.settings(false);else if(this.scene.appendix)this.appendix(false);return;}
