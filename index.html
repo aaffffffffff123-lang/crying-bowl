@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#111319"><meta name="description" content="CRYING BOWL — forged bowls and a scraping frog instrument.">
 <title>CRYING BOWL</title><!-- v0.5.0 | one accepted hit = one stage | visible first pose | no skipped key poses -->
 <meta name="crying-bowl-build" content="expression-fix-v05-20260922">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M6 18h52c0 30-12 36-26 36S6 48 6 18Z' fill='%23b99155'/%3E%3Cpath d='m19 30 7-3m12 0 7 3M24 43q8-12 16 0' fill='none' stroke='%23322617' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cpath d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='%23b98a48'/%3E%3Cpath d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='%239f7338'/%3E%3Cellipse cx='32' cy='19' rx='27' ry='7' fill='%234b3217'/%3E%3Cellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='%23e9cc96' stroke-width='2.4'/%3E%3Cpath d='M13 36l12-4M51 36l-12-4' fill='none' stroke='%232a1c0e' stroke-width='4.6' stroke-linecap='round'/%3E%3Cpath d='M23 52c1.5-8 16.5-8 18 0c-4 3.6-14 3.6-18 0Z' fill='%232a1c0e'/%3E%3Cpath d='M17 38Q12.8 43.56 12.8 46.5A4.2 4.2 0 1 0 21.2 46.5Q21.2 43.56 17 38Z' fill='%23a9def5'/%3E%3Ccircle cx='15.5' cy='45.9' r='1.2' fill='%23fff'/%3E%3Cpath d='M47 38Q42.6 42.42 42.6 45.5A4.4 4.4 0 1 0 51.4 45.5Q51.4 42.42 47 38Z' fill='%23a9def5'/%3E%3Ccircle cx='45.5' cy='44.8' r='1.2' fill='%23fff'/%3E%3Cpath d='M9 51Q6 54.9 6 57A3 3 0 1 0 12 57Q12 54.9 9 51Z' fill='%23a9def5'/%3E%3C/svg%3E">
 <style>
 :root{color-scheme:dark;--gold:#c5a474;--muted:#9d9c9c;--line:rgba(208,177,128,.19)}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#111319;color:#e9decc;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-tap-highlight-color:transparent}button,input{font:inherit}button{color:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid #e4c38b;outline-offset:5px}button:disabled{opacity:.5;cursor:wait}button:active{transform:translateY(1px)}[hidden]{display:none!important}
@@ -81,7 +81,7 @@ header .icon{width:38px;height:38px;min-width:38px}.toolbar{gap:7px!important}
 #forceRow span,#forceRow button[data-force]{display:none!important}
 #dampMini{display:inline-flex!important;align-items:center;justify-content:center;min-width:164px;min-height:44px;border-radius:999px!important;font-size:12px!important;letter-spacing:.14em;padding:0 24px!important;background:rgba(20,24,29,.88)!important;border:1px solid rgba(194,166,117,.45)!important;color:#e6d7c1!important;box-shadow:0 10px 28px #0007}
 #modeSwitch{position:fixed;right:14px;bottom:max(18px,env(safe-area-inset-bottom));left:auto;top:auto;transform:none;z-index:8;display:block!important}
-#showFrog{display:grid!important;place-items:center;width:56px;height:56px;padding:0;border-radius:16px;border:1px solid rgba(194,166,117,.42);background:rgba(18,21,25,.88);box-shadow:0 12px 32px #0008;color:#eadbc7}
+#showFrog{min-width:0!important;padding:0!important;border-radius:16px!important;display:grid!important;place-items:center;width:56px;height:56px;padding:0;border-radius:16px;border:1px solid rgba(194,166,117,.42);background:rgba(18,21,25,.88);box-shadow:0 12px 32px #0008;color:#eadbc7}
 #showFrog svg{width:34px;height:34px}
 @media(max-width:700px){#modeSwitch{right:12px;bottom:max(12px,env(safe-area-inset-bottom))}#showFrog{width:52px;height:52px;border-radius:14px}#showFrog svg{width:32px;height:32px}#dock{width:min(260px,calc(100vw - 70px))!important;left:calc(50% - 18px)!important}}
 
@@ -144,7 +144,7 @@ uniform float uTime,uEnergy,uPulse,uOpen,uExpression,uBlink,uMorph,uKind,uSeed;
 out vec3 vWorld,vNormal,vLocal;
 out float vObjectScale;
 out vec2 vUV;
-out vec4 vReflect;
+out vec4 vReflect;uniform float uCrumple;vec3 crumple(vec3 p,float c){float h=clamp(p.y/3.2,0.,1.),ang=atan(p.x,p.z),heave=pow(.5+.5*sin(uTime*16.3+uSeed),2.),squash=c*(.085+.075*heave);vec3 q=p;q.y*=1.-squash;float buckle=c*h*(.085*sin(3.*ang+1.3+.9*sin(uTime*1.7+uSeed))+.05*sin(5.*ang-uTime*2.3+uSeed*2.)+.03*heave*sin(7.*ang+uTime*5.1));q.xz*=(1.+squash*(.55+.9*sin(h*3.14159)))*(1.+buckle);float tw=c*(h-.25)*.20*sin(uTime*3.1+uSeed),cs=cos(tw),sn=sin(tw);q.xz=vec2(cs*q.x+sn*q.z,-sn*q.x+cs*q.z);q.z-=c*h*h*(.20+.12*heave);q.y-=c*h*h*.09*(.5+.5*cos(ang))*(.6+.4*heave);return q;}
 void main(){
  vec3 p=aPosition,n=aNormal;
  if(uMorph>.5){
@@ -167,7 +167,7 @@ void main(){
   p.x+=sign(p.x+0.0001)*crease*(.42+.58*sin(p.y*7.4+uSeed));
   p.y-=crease*(.30+.18*cos(abs(p.x)*8.0));
   p.z+=crease*(.22+.18*sin(abs(p.x)*6.2+p.y*2.1));
-  n=normalize(n+vec3(sin(ang*2.+uTime*43.3),sin(p.y*15.-uTime*54.),0.)*uEnergy*root*.018+vec3(sign(p.x+0.0001)*crease*1.8,-crease*1.3,crease));
+  n=normalize(n+vec3(sin(ang*2.+uTime*43.3),sin(p.y*15.-uTime*54.),0.)*uEnergy*root*.018+vec3(sign(p.x+0.0001)*crease*1.8,-crease*1.3,crease));float cr=smoothstep(.22,1.,uCrumple);if(cr>.001){vec3 t1=normalize(cross(n,vec3(.31,.95,.07))),t2=cross(n,t1),ca=crumple(p,cr),cb=crumple(p+t1*.02,cr),cd=crumple(p+t2*.02,cr);n=normalize(cross(cb-ca,cd-ca));p=ca;}
  }
  mat4 model=uModel; if(uInstanced>.5)model=uModel*aInstance;
  vWorld=(model*vec4(p,1)).xyz;
@@ -302,8 +302,8 @@ void main(){
  float alpha=uAlpha;
  if(uKind>12.5&&uKind<13.5){
   float F=pow(1.-max(dot(N,V),0.),4.);
-  light=albedo*.085+env(reflect(-V,N),.085)*(.075+.55*F)+vec3(1.0,1.1,1.18)*pow(max(dot(N,H),0.),85.)*.82;
-  alpha=uAlpha*(.36+.64*F);
+  float ndv=max(dot(N,V),0.),caustic=smoothstep(.30,.95,.5-.5*dot(N,L))*(.35+.65*ndv);light=mix(albedo*vec3(.16,.26,.42),albedo*vec3(1.0,1.2,1.32),caustic)+env(reflect(-V,N),.05)*(.03+.55*F)+vec3(1.,1.04,1.08)*pow(max(dot(N,H),0.),170.)*3.2;
+  alpha=uAlpha*clamp(.64+.36*F+.22*caustic,0.,1.);
  }
 
  if(uKind>1.5 && uKind<2.5){
@@ -387,7 +387,7 @@ class Renderer{
  updateMesh(m){const g=this.gl;g.bindBuffer(g.ARRAY_BUFFER,m.vbo);g.bufferSubData(g.ARRAY_BUFFER,0,m.verts);}
  u(name,v){let g=this.gl,l=this.uniforms[name];if(l===undefined)return;if(typeof v==='number')g.uniform1f(l,v);else if(v.length===16)g.uniformMatrix4fv(l,false,v);else if(v.length===3)g.uniform3fv(l,v);else if(v.length===32)g.uniform4fv(l,v);}
  begin(camera,time,ripples,mirror=false){let g=this.gl;g.bindFramebuffer(g.FRAMEBUFFER,mirror?this.fbo:null);g.viewport(0,0,mirror?this.rw:this.width,mirror?this.rh:this.height);g.clear(g.COLOR_BUFFER_BIT|g.DEPTH_BUFFER_BIT);g.useProgram(this.program);this.u('uVP',mirror?camera.rvp:camera.vp);this.u('uReflectVP',camera.rvp);this.u('uEye',mirror?camera.reye:camera.eye);this.u('uTime',time);this.u('uRipples',ripples);this.u('uMirror',mirror?1:0);g.activeTexture(g.TEXTURE1);g.bindTexture(g.TEXTURE_2D,mirror?this.blank:this.reflection);g.uniform1i(this.uniforms.uReflection,1);this.draws=0;this.triangles=0;}
- draw(obj){if(obj.visible===false)return;let g=this.gl,mat=obj.mat||{};this.u('uInstanced',obj.instances!==undefined?1:0);this.u('uModel',obj.model||M.model(obj.pos,obj.scale,obj.rot));this.u('uKind',mat.kind||0);this.u('uColor',mat.color||[.55,.31,.11]);this.u('uMetal',mat.metal??.8);this.u('uRough',mat.rough??.32);this.u('uAlpha',mat.alpha??1);this.u('uGlow',mat.glow||0);this.u('uEnergy',obj.energy||0);this.u('uPulse',obj.pulse||0);this.u('uOpen',obj.open||0);this.u('uExpression',obj.expression||0);this.u('uBlink',obj.blink||0);this.u('uMorph',obj.mesh.morph?1:0);this.u('uSeed',obj.seed||0);if(mat.alpha<1){g.enable(g.BLEND);g.blendFunc(g.SRC_ALPHA,mat.add?g.ONE:g.ONE_MINUS_SRC_ALPHA);g.depthMask(false);}else{g.disable(g.BLEND);g.depthMask(true);}g.bindVertexArray(obj.mesh.vao);if(obj.instances!==undefined)g.drawElementsInstanced(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0,obj.instances);else g.drawElements(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0);g.depthMask(true);this.draws++;this.triangles+=obj.mesh.count/3;}
+ draw(obj){if(obj.visible===false)return;let g=this.gl,mat=obj.mat||{};this.u('uInstanced',obj.instances!==undefined?1:0);this.u('uModel',obj.model||M.model(obj.pos,obj.scale,obj.rot));this.u('uKind',mat.kind||0);this.u('uColor',mat.color||[.55,.31,.11]);this.u('uMetal',mat.metal??.8);this.u('uRough',mat.rough??.32);this.u('uAlpha',mat.alpha??1);this.u('uGlow',mat.glow||0);this.u('uEnergy',obj.energy||0);this.u('uPulse',obj.pulse||0);this.u('uOpen',obj.open||0);this.u('uExpression',obj.expression||0);this.u('uBlink',obj.blink||0);this.u('uCrumple',obj.crumple||0);this.u('uMorph',obj.mesh.morph?1:0);this.u('uSeed',obj.seed||0);if(mat.alpha<1){g.enable(g.BLEND);g.blendFunc(g.SRC_ALPHA,mat.add?g.ONE:g.ONE_MINUS_SRC_ALPHA);g.depthMask(false);}else{g.disable(g.BLEND);g.depthMask(true);}g.bindVertexArray(obj.mesh.vao);if(obj.instances!==undefined)g.drawElementsInstanced(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0,obj.instances);else g.drawElements(g.TRIANGLES,obj.mesh.count,g.UNSIGNED_INT,0);g.depthMask(true);this.draws++;this.triangles+=obj.mesh.count/3;}
 }
 function gridMesh(nu,nv,fn){let v=[],ix=[];for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){let u=i/nu,t=j/nv,p=fn(u,t);let e=.0003,pu=fn(Math.min(1,u+e),t),mu=fn(Math.max(0,u-e),t),pv=fn(u,Math.min(1,t+e)),mv=fn(u,Math.max(0,t-e));let n=V.norm(V.cross(V.sub(pu,mu),V.sub(pv,mv)));v.push(...p,...n,u,t);}for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){let a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;ix.push(a,b,c,b,d,c);}return {vertices:v,indices:ix};}
 function lathe(profile,n=64){return gridMesh(n,profile.length-1,(u,t)=>{let k=t*(profile.length-1),a=Math.min(profile.length-2,Math.floor(k)),f=k-a,r=lerp(profile[a][0],profile[a+1][0],f),y=lerp(profile[a][1],profile[a+1][1],f);return [Math.sin(u*TAU)*r,y,Math.cos(u*TAU)*r]});}
@@ -673,7 +673,7 @@ class CryStageSequence{
   if(!this.move){
    if(this.value===this.target&&this.target>0){
     this.quiet=Math.max(0,this.quiet-dt);
-    if(this.quiet===0){this.target--;this.quiet=.20;}
+    {const h=Math.max(0,Math.min(this.target,this.hold??this.target));if(h<this.value)this.value=this.target=Math.max(h,this.value-dt*1.6);}
    }
    if(Math.abs(this.value-this.target)>1e-7){
     const up=this.target>this.value;
@@ -741,7 +741,7 @@ class BowlVoice{
   return this.engine.original?0:clamp((this.crySequence.value-1)/(CRY_MAX-1));
  }
  mood(t,e){
-  const accepted=this.crySequence.accepted;
+  const accepted=this.crySequence.accepted;{const q=this.crySequence;if(t-this.last<1.6||!(this.eRef>0)){this.eRef=Math.max(e,.03);this.pRef=q.target;q.hold=q.target;}else q.hold=this.pRef*clamp(Math.log(Math.max(e,.01)/.01)/Math.log(this.eRef/.01));}
   this.lv=this.crySequence.tick(t);this.stage=this.crySequence.target;
   if(this.crySequence.accepted!==accepted)this.crackAt=t+.9;
   const k=this.k=this.engine.original?0:clamp((this.lv-1)/(CRY_MAX-1));
@@ -1049,7 +1049,7 @@ function curvedTube(controls,radii,sides=10,steps=55){
  for(let i=0;i<pts.length;i++)for(let k=0;k<=sides;k++){const v=(i*(sides+1)+k)*8;for(let a=0;a<3;a++)data.vertices[v+a]=pts[i][a]+(data.vertices[v+a]-pts[i][a])*rs[i];}
  return data;
 }
-const BOWL_SIZES=[1.12,.91,.72,.55,.40,.27,.205,.155];
+function bowlCrumple(p,w,t,seed){const c=smooth(.22,1,w);if(c<=.001)return p;const h=clamp(p[1]/3.2),ang=Math.atan2(p[0],p[2]),heave=Math.pow(.5+.5*Math.sin(t*16.3+seed),2),squash=c*(.085+.075*heave),buckle=c*h*(.085*Math.sin(3*ang+1.3+.9*Math.sin(t*1.7+seed))+.05*Math.sin(5*ang-t*2.3+seed*2)+.03*heave*Math.sin(7*ang+t*5.1)),grow=(1+squash*(.55+.9*Math.sin(h*3.14159)))*(1+buckle),tw=c*(h-.25)*.20*Math.sin(t*3.1+seed),cs=Math.cos(tw),sn=Math.sin(tw),x=p[0]*grow,z=p[2]*grow;return [cs*x+sn*z,p[1]*(1-squash)-c*h*h*.09*(.5+.5*Math.cos(ang))*(.6+.4*heave),-sn*x+cs*z-c*h*h*(.20+.12*heave)];}function teardropData(){return gridMesh(14,12,(u,v)=>{const a=u*TAU,th=.0001+(1-v)*(Math.PI-.0002),s=Math.sin(th),c=Math.cos(th),top=Math.max(0,c),w=s*(1-.34*top*top);return [w*Math.sin(a),c+.42*top*top*top,w*Math.cos(a)];});}const BOWL_SIZES=[1.12,.91,.72,.55,.40,.27,.205,.155];
 const BRONZE=[[.56,.331,.123],[.54,.32,.133],[.60,.387,.178],[.51,.324,.155],[.61,.407,.188],[.62,.43,.214],[.66,.448,.23],[.68,.468,.243]];
 class Bowl{
  constructor(scene,id,pos,scale,angle){
@@ -1064,10 +1064,10 @@ class Bowl{
   for(const side of [-1,1]){
    const rows=28,n=5,verts=[],indices=[];for(let j=0;j<=rows;j++)for(let k=0;k<=n;k++)verts.push(0,0,0,0,0,1,k/n,j/rows);
    for(let j=0;j<rows;j++)for(let k=0;k<n;k++){const a=j*(n+1)+k,c=a+n+1;indices.push(a,a+1,c,a+1,c+1,c);}
-   for(const snot of [0,1])this.streams.push({side,snot,rows,n,mesh:scene.renderer.mesh({vertices:verts,indices},true),mat:{kind:13,color:snot?[2.0,2.3,1.1]:[.57,.67,.72],metal:.09,rough:snot?.10:.045,alpha:0}});
+   
   }
  }
- surfacePoint(x,y,extra=0){return M.point(this.matrix,faceXYZ(x,y,{open:this.open,grief:this.expression,blink:this.blink},extra)).slice(0,3);}
+ toWorld(q){return M.point(this.matrix,bowlCrumple(q,this.blink,this.now||0,this.id*2.19)).slice(0,3);} surfacePoint(x,y,extra=0){return this.toWorld(faceXYZ(x,y,{open:this.open,grief:this.expression,blink:this.blink},extra));} snotPoint(side,u,extra=0){const g=this.expression,w=this.blink,pose={open:this.open,grief:g,blink:w},nx=.185+.018*g+.03*w,ny=1.862+.012*w-(.017+.014*g+.034*w)*.8,wd=.585+this.open*.108+w*this.open*.20,lipY=Math.min(ny-.02,mouthContour(Math.acos(clamp(nx/wd,-1,1)),pose)[1]+.035);return this.toWorld(faceXYZ(side*nx,lerp(ny,lipY,u),pose,extra));}
  tick(t,dt,engine){
   const v=engine?.voices[this.id],e=this.energy=v?v.level:0;
   const lv=clamp(v?.lv||0,0,CRY_MAX),k=clamp((lv-1)/(CRY_MAX-1)),poseTarget=sampleCryPose(lv);
@@ -1087,7 +1087,7 @@ class Bowl{
   const kick=(this.scene.reduced?.2:1)*Math.exp(-Math.max(0,t-this.hitAt)*18)*.015;
   const trem=(this.scene.reduced?.2:1)*e*(.004+.006*k);
   this.matrix=M.model(this.pos,this.scale,[-kick+trem*Math.sin(t*11+this.id),this.rot[1],trem*Math.sin(t*14+this.id)]);
-  for(const p of this.parts){p.model=this.matrix;p.energy=this.scene.reduced?e*.18:e;p.pulse=this.pulse;p.open=this.open;p.expression=this.expression;p.blink=this.blink;p.seed=this.id*2.19;}
+  for(const p of this.parts){p.model=this.matrix;p.energy=this.scene.reduced?e*.18:e;p.pulse=this.pulse;p.open=this.open;p.expression=this.expression;p.blink=this.blink;p.crumple=this.blink;p.seed=this.id*2.19;}
   const tears=poseTarget.tears*release,snot=poseTarget.snot*release;
   this.tearFlow=lerp(this.tearFlow,tears,1-Math.exp(-dt*(tears>this.tearFlow?2.5:.85)));
   this.snotFlow=lerp(this.snotFlow||0,snot,1-Math.exp(-dt*(snot>(this.snotFlow||0)?1.6:.7)));
@@ -1115,12 +1115,12 @@ class Bowl{
    }
    this.scene.renderer.updateMesh(s.mesh);
   }
-  const rate=(1.0+Math.pow(this.tearFlow,1.6)*21)*this.tearFlow*this.scene.tearAmount*(this.id<5?1:.65);
+  this.now=t;const rate=this.tearFlow*(2.4+4.8*this.tearFlow*this.tearFlow)*this.scene.tearAmount*(this.id<5?1:.7);this.snotClock=(this.snotClock||0)+dt*(this.snotFlow||0)*(1.6+4.4*(this.snotFlow||0))*this.scene.tearAmount;if(this.snotClock>=1){this.snotClock=0;const nose=Math.random()<.5?-1:1;this.scene.spawnDrop(this,u=>this.snotPoint(nose,u,.055),(.075+Math.random()*.03)*this.scale,.30,.55);}
   this.dropClock+=dt*rate;
-  let limit=0;while(this.dropClock>=1&&limit++<3){this.dropClock--;for(const side of [-1,1]){
+  let limit=0;while(this.dropClock>=1&&limit++<3){this.dropClock--;for(const side of [Math.random()<.5?-1:1]){
    /* at the top stages tears well up along the whole lower lid, not from one spot */
    const x=side*(.73-.26*k+Math.random()*(.26+.42*k)),y=2.37-this.open*.26;
-   this.scene.spawnTear(this,x,y,(.045+Math.random()*.027+clamp(e-.65)*.026+.014*k)*this.scale);
+   this.scene.spawnTear(this,x,y,(.095+Math.random()*.045+.03*k)*this.scale,1.05);
   }}
  }
 }
@@ -1195,7 +1195,7 @@ class AppendixCreature{
    }),burnt,'lid');
    const ps=side>0?1.344:Math.PI-1.344;
    add(morphGrid(20,4,(u,v,p)=>{const a=u*TAU,rr=v*(.055+.02*p.grief+.06*(p.blink||0));return frogSkin(ps+Math.cos(a)*rr/.95,.898+Math.sin(a)*rr/3.25,p,.012,true);}),{kind:9,color:[.009,.004,.001],metal:0,rough:.95},'nostril');
-   const strand=emptyTube(R,22,5);Object.assign(strand,{side,mat:{kind:13,color:[2.0,2.3,1.1],metal:.09,rough:.10,alpha:0},visible:false});this.strands.push(strand);this.parts.push(strand);
+   
   }
   /* A tapering body; its pleats and long back keep the old silhouette. */
   add(gridMesh(88,44,(u,v)=>{
@@ -1244,7 +1244,7 @@ class AppendixCreature{
   this.stick={mesh:R.mesh(combineData(twig)),mat:{kind:17,color:[.115,.075,.045],metal:0,rough:.9},pos:[-2.35,.10,3.56],rot:[0,-.32,-.08]};
   this.plinth={mesh:R.mesh(lathe([[.01,-.34],[4.4,-.34],[4.4,-.12],[4.27,-.035],[.01,-.035]],96)),mat:{kind:0,color:[.026,.028,.031],metal:.20,rough:.65}};
  }
- pose(){return {open:this.open,grief:this.expression,blink:this.blink};}
+ pose(){return {open:this.open,grief:this.expression,blink:this.blink};} snotPoint(side,u,extra=0){const ss=lerp(.905,.9962,u),ps=Math.acos(Math.pow(Math.min(1,.30/frogRing(ss).rx),1.25));return M.point(this.matrix,frogSkin(side>0?ps:Math.PI-ps,ss,this.pose(),extra+.03,true)).slice(0,3);}
  /* tears use the bowls' face coordinates: x picks the side, falling y slides from the eye rim down the cheek to the lip */
  surfacePoint(x,y,extra=0){const sl=clamp((2.37-y)/.72),psi=lerp(.78,.03,sl);return M.point(this.matrix,frogSkin(x>0?psi:Math.PI-psi,.477+.06*sl,this.pose(),extra+.03,true)).slice(0,3);}
  contains(x,y){const s=this.scene,c=s.project([0,1.7,.1]),a=s.project([-2.5,.2,2]),b=s.project([2.5,.2,2]),top=s.project([0,3.2,-.8]);return x>Math.min(a.x,b.x)-15&&x<Math.max(a.x,b.x)+15&&y>top.y-15&&y<c.y+Math.abs(a.y-c.y)+30;}
@@ -1257,7 +1257,7 @@ class AppendixCreature{
   const k=clamp(((x-back.x)*d[0]+(y-back.y)*d[1])/Math.max(100,len));
   /* every .8 of a back-length actually scraped counts as one more stroke */
   if(this.lastK!==null&&performance.now()/1000-this.touchAt<.3){this.travel+=Math.abs(k-this.lastK);if(this.travel>=.8){this.travel=0;this.climb();}}
-  this.lastK=k;this.reach(k);this.touchAt=performance.now()/1000;
+  if(this.lastK===null)this.clickK=k;const crossed=Math.floor(Math.abs(k-this.clickK)*13+1e-9);if(crossed)this.clickK+=Math.sign(k-this.clickK)*crossed/13;this.lastK=k;this.reach(k);this.touchAt=performance.now()/1000;return crossed;
  }
  /* Same rule as the bowls: a stroke while it is still crying climbs one stage, otherwise it starts over. */
  climb(){this.lv=Math.min(5,(this.lv>.35?Math.max(1,Math.ceil(this.lv-.15)):0)+1);this.calmAt=performance.now()/1000+1.4;}
@@ -1280,8 +1280,8 @@ class AppendixCreature{
   this.matrix=M.model([.022*vib*Math.sin(t*53),.017*vib*Math.sin(t*8),0],1,[-.016*vib,.10+Math.sin(t*9)*vib*.014,Math.sin(t*7)*vib*.018]);
   for(const p of this.parts){p.model=this.matrix;p.open=this.open;p.expression=this.expression;p.blink=this.blink;p.energy=0;p.pulse=0;p.seed=2.38;}
   this.tearFlow=lerp(this.tearFlow,at([0,.20,.40,.60,.82,1]),1-Math.exp(-dt*2.4));
-  this.dropClock+=dt*this.tearFlow*(1.5+this.tearFlow*17)*this.scene.tearAmount;
-  if(this.dropClock>1){this.dropClock=0;for(const side of [-1,1])this.scene.spawnTear(this,side*(.75+Math.random()*.20),2.37,.043+Math.random()*.025+.02*k);}
+  this.dropClock+=dt*this.tearFlow*(2.2+this.tearFlow*6)*this.scene.tearAmount;
+  if(this.dropClock>1){this.dropClock=0;const eye=Math.random()<.5?-1:1;this.scene.spawnTear(this,eye*(.75+Math.random()*.20),2.37,.10+Math.random()*.05+.03*k,.72);}this.snotClock=(this.snotClock||0)+dt*this.snotFlow*(1.6+4.4*this.snotFlow)*this.scene.tearAmount;if(this.snotClock>=1){this.snotClock=0;const nose=Math.random()<.5?-1:1;this.scene.spawnDrop(this,u=>this.snotPoint(nose,u,.04),.085+Math.random()*.03,.30,.60);}
   /* snot: down the snout from each nostril to the upper lip, then a strand that stretches, drips and starts again */
   this.snotFlow=lerp(this.snotFlow,at([0,0,.05,.32,.66,1]),1-Math.exp(-dt*1.4));
   const pose=this.pose(),flow=this.snotFlow;
@@ -1315,7 +1315,7 @@ class Scene{
    return new Bowl(this,i,pos,sc,a);
   });
   this.rippleValues=new Float32Array(32);
-  this.dropBatch=R.makeInstances(sphereData(11,8),360,{kind:13,color:[.59,.71,.77],metal:.06,rough:.04,alpha:.93});
+  this.dropBatch=R.makeInstances(teardropData(),360,{kind:13,color:[.59,.71,.77],metal:.06,rough:.04,alpha:.93});
   this.buildTemple();this.buildMallet();this.creature=new AppendixCreature(this);this.resize(innerWidth,innerHeight);
   this.mallet.pos=this.mallet.rest.slice();for(const b of this.bowls)b.rot[1]=b.angle;
  }
@@ -1403,22 +1403,22 @@ class Scene{
   for(const b of this.bowls){
    const center=[b.pos[0],b.pos[1]+1.66*b.scale,b.pos[2]],r=[2.62*b.scale,1.69*b.scale,2.62*b.scale],v=V.sub(c.eye,center).map((n,i)=>n/r[i]),d=dir.map((n,i)=>n/r[i]),A=V.dot(d,d),B=V.dot(v,d),C=V.dot(v,v)-1,det=B*B-A*C;
    if(det<0)continue;const t=(-B-Math.sqrt(det))/A;if(t>0&&t<depth){depth=t;best=b.id;}
-  }return best;
+  }if(best===null){let near=34;for(const b of this.bowls){const q=this.project([b.pos[0],b.pos[1]+1.66*b.scale,b.pos[2]]);if(q.w<=0)continue;const d=Math.hypot(q.x-x,q.y-y);if(d<near){near=d;best=b.id;}}}return best;
  }
  hit(i,t,strength){const b=this.bowls[i],m=this.mallet;b.hitAt=t+.10;m.from=m.pos.slice();m.target=M.point(b.matrix,[-1.89,2.49,1.92]).slice(0,3);m.time=t;m.scale=clamp(b.scale*.68,.30,.86);this.rings.push({id:i,t:t+.1,strength});if(this.rings.length>22)this.rings.shift();}
  dripFrom(owner,p,r){if(this.drops.length>=330)this.drops.shift();this.drops.push({owner,x:0,y:0,r,p,life:1,v:.3,floor:-.115,slide:0});}
- spawnTear(owner,x,y,r){if(this.drops.length>=330)this.drops.shift();const p=owner.surfacePoint(x,y,.044);this.drops.push({owner,x,y,r,p,life:0,v:0,floor:-.115,slide:.27+Math.random()*.10});}
+ spawnDrop(owner,path,r,well,slide){if(this.drops.length>=330)this.drops.shift();this.drops.push({owner,path,r,p:path(0),life:0,v:0,k:0,sp:0,well,slide,free:false,floor:-.115});} spawnTear(owner,x,y,r,len=1){const side=Math.sign(x)||1,lift=r*.55/Math.max(.16,owner.scale);this.spawnDrop(owner,u=>owner.surfacePoint(x+side*.12*u,y-len*u,lift),r,.20+Math.random()*.16,.75+Math.random()*.35);}
  updateDrops(t,dt){
   for(const d of this.drops){
    d.life+=dt;
-   if(d.life<d.slide){d.y-=dt*(1.0+d.life*10);d.x+=Math.sign(d.x)*dt*.22;d.p=d.owner.surfacePoint(d.x,d.y,d.r*.72/Math.max(.16,d.owner.scale));d.v=d.owner.scale*2.0;}
-   else{d.v+=dt*7.5*Math.sqrt(d.owner.scale);d.p[1]-=d.v*dt;}
+   if(d.life<d.well+d.slide){const u=clamp((d.life-d.well)/d.slide);d.p=d.path(u*u*(.5+.5*u));d.k=.3+.7*smooth(0,d.well,d.life);d.sp=u;}
+   else{if(!d.free){d.free=true;d.k=1;d.v=d.owner.scale*1.1;}d.v+=dt*8.5*Math.sqrt(d.owner.scale);d.p[1]-=d.v*dt;}
    if(d.p[1]<=d.floor){if(this.splashes.length<75)this.splashes.push({p:[d.p[0],-.119,d.p[2]],life:0,size:d.r});d.dead=true;}
   }
   this.drops=this.drops.filter(d=>!d.dead&&d.life<4);
   for(const s of this.splashes)s.life+=dt;this.splashes=this.splashes.filter(s=>s.life<.85);
   const batch=this.dropBatch;let i=0;
-  for(const d of this.drops){const stretch=1.25+clamp(d.v*.32,0,.85);batch.matrices.set(M.model(d.p,[d.r/Math.sqrt(stretch),d.r*stretch,d.r/Math.sqrt(stretch)]),i++*16);}
+  for(const d of this.drops){const tall=d.free?1.05+clamp(d.v*.2,0,.55):.78+.34*d.sp,wide=d.r*d.k/Math.sqrt(Math.max(.85,tall));batch.matrices.set(M.model(d.p,[wide,d.r*d.k*tall,wide]),i++*16);}
   this.renderer.uploadInstances(batch,i);
  }
  tick(t,dt,audio){
@@ -1462,8 +1462,8 @@ class Scene{
 }
 
 const $=s=>document.querySelector(s);
-const frogToggleIcon=`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 42c0-14 8-22 22-22s22 8 22 22"/><path d="M14 42h36"/><circle cx="23" cy="28" r="4"/><circle cx="41" cy="28" r="4"/><path d="M24 41c5 3 11 3 16 0"/><path d="M18 18l3-7 6 6 5-6 4 7"/></svg>`;
-const bowlToggleIcon=`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 24c0 19 7 28 18 28s18-9 18-28"/><path d="M10 23h44"/><path d="M22 14c4-5 16-5 20 0"/><path d="M25 29c2 3 12 3 14 0"/><path d="M23 31c2 7 0 12-3 16"/><path d="M41 31c-2 7 0 12 3 16"/></svg>`;
+const frogToggleIcon=`<svg style='width:40px;height:40px' viewBox='0 0 64 64'><path d='M17 30c1-13 8-21 15-21s14 8 15 21Z' fill='#a5763c'/><path d='M24 14h16M21 19h22M19 24h26' fill='none' stroke='#6b4722' stroke-width='2.4' stroke-linecap='round'/><path d='M11 53l-5 7M16 55l-2 7M21 56l1 6M53 53l5 7M48 55l2 7M43 56l-1 6' fill='none' stroke='#a5763c' stroke-width='3.4' stroke-linecap='round'/><ellipse cx='32' cy='42' rx='28' ry='15' fill='#d2a466'/><path d='M4 43c2 9 13 14 28 14s26-5 28-14c-7 6-17 8-28 8S11 49 4 43Z' fill='#b98a4e'/><circle cx='17' cy='28' r='9.5' fill='#b98a4e'/><circle cx='47' cy='28' r='9.5' fill='#b98a4e'/><circle cx='17' cy='28' r='6.6' fill='#140d07'/><circle cx='47' cy='28' r='6.6' fill='#140d07'/><circle cx='14.6' cy='25.6' r='2' fill='#fff'/><circle cx='44.6' cy='25.6' r='2' fill='#fff'/><circle cx='28.5' cy='39' r='1.4' fill='#4a2f16'/><circle cx='35.5' cy='39' r='1.4' fill='#4a2f16'/><path d='M9 47q23-6 46 0' fill='none' stroke='#4a2f16' stroke-width='2.8' stroke-linecap='round'/><path d='M12 37Q8.4 41.48 8.4 44A3.6 3.6 0 1 0 15.6 44Q15.6 41.48 12 37Z' fill='#a9def5'/><circle cx='10.7' cy='43.5' r='1.0' fill='#fff'/><path d='M52 37Q48 42.2 48 45A4 4 0 1 0 56 45Q56 42.2 52 37Z' fill='#a9def5'/><circle cx='50.6' cy='44.4' r='1.1' fill='#fff'/></svg>`;
+const bowlToggleIcon=`<svg style='width:40px;height:40px' viewBox='0 0 64 64'><path d='M5 19c0 25 10 39 27 39s27-14 27-39Z' fill='#b98a48'/><path d='M59 19c0 25-10 39-27 39 11-3 19-15 20-39Z' fill='#9f7338'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='#4b3217'/><ellipse cx='32' cy='19' rx='27' ry='7' fill='none' stroke='#e9cc96' stroke-width='2.4'/><path d='M13 36l12-4M51 36l-12-4' fill='none' stroke='#2a1c0e' stroke-width='4.6' stroke-linecap='round'/><path d='M23 52c1.5-8 16.5-8 18 0c-4 3.6-14 3.6-18 0Z' fill='#2a1c0e'/><path d='M17 38Q12.8 43.56 12.8 46.5A4.2 4.2 0 1 0 21.2 46.5Q21.2 43.56 17 38Z' fill='#a9def5'/><circle cx='15.5' cy='45.9' r='1.2' fill='#fff'/><path d='M47 38Q42.6 42.42 42.6 45.5A4.4 4.4 0 1 0 51.4 45.5Q51.4 42.42 47 38Z' fill='#a9def5'/><circle cx='45.5' cy='44.8' r='1.2' fill='#fff'/><path d='M9 51Q6 54.9 6 57A3 3 0 1 0 12 57Q12 54.9 9 51Z' fill='#a9def5'/></svg>`;
 const speakerOn='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4 6 8H3v8h3l5 4V4Z"/><path d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>';
 const speakerOff='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4 6 8H3v8h3l5 4V4Z"/><path d="m16 9 6 6m0-6-6 6"/></svg>';
 class App{
@@ -1566,9 +1566,9 @@ class App{
     if(i!==null&&i!==p.bowl){this.audio.voices[p.bowl].rub=0;p.bowl=i;this.hit(i,clamp(.48+speed*.35,.45,1.16));}
     else if(i!==null)this.audio.voices[i].rub=Math.max(this.audio.voices[i].rub,clamp(speed*.9,0,.9));
    }else if(p.mode==='scrape'&&this.audio.ready){
-    this.scene.creature.point(e.clientX,e.clientY);p.distance+=dist;
-    const spacing=Math.max(4,Math.min(this.scene.width,this.scene.height)*.011),count=Math.min(10,Math.floor(p.distance/spacing)),force=clamp(.25+speed*.48,.20,1.0);
-    if(count){p.distance-=count*spacing;for(let k=0;k<count;k++)this.audio.scraper.tooth(force,k*.006);this.scene.creature.kick(force);}
+    const crossed=this.scene.creature.point(e.clientX,e.clientY);
+    const count=Math.min(10,crossed),force=clamp(.25+speed*.48,.20,1.0);
+    if(count){for(let k=0;k<count;k++)this.audio.scraper.tooth(force,k*.012);this.scene.creature.kick(force);}
    }
    p.x=e.clientX;p.y=e.clientY;p.time=now;
   });
