@@ -300,10 +300,10 @@ void main(){
   light+=vec3(.11,.069,.022)*spec*(1.-deep)*.5;
  }
  float alpha=uAlpha;
- if(uKind>12.5&&uKind<13.5){
+ if(uKind>17.5&&uKind<18.5){float across=1.-pow(abs(vUV.x*2.-1.),2.4),fallen=max(0.,vUV.y-1.),isFall=step(.0001,fallen),run=vUV.y*7.-uTime*(2.4+1.6*uGlow),streak=.62*noise(vec3(vUV.x*4.+uSeed,run,uSeed*1.3))+.38*noise(vec3(vUV.x*11.-uSeed,run*2.6,2.7)),wb=streak*.045;vec3 sx=dFdx(vWorld),sy=dFdy(vWorld),q1=cross(sy,N),q2=cross(N,sx);float sdet=dot(sx,q1);vec3 Nw=normalize(abs(sdet)*N-sign(sdet)*(dFdx(wb)*q1+dFdy(wb)*q2));float Fw=pow(1.-max(dot(Nw,V),0.),3.),glint=pow(max(dot(Nw,H),0.),48.)+.7*pow(max(dot(Nw,H2),0.),36.);light=uColor+env(reflect(-V,Nw),.06)*(.02+.25*Fw)+vec3(1.,.93,.80)*glint*2.8+vec3(.22,.23,.25)*pow(streak,3.)*(1.-isFall)+vec3(.50,.53,.57)*pow(streak,1.8)*isFall;float torn=smoothstep(.25,.95,streak+.62-fallen*.95);alpha=uAlpha*across*mix(.40+.20*streak+.25*Fw+glint*1.2,torn*(.50+.40*streak+glint*1.2),isFall)*(1.-smoothstep(.88,1.,fallen));}if(uKind>12.5&&uKind<13.5){
   float F=pow(1.-max(dot(N,V),0.),4.);
-  float ndv=max(dot(N,V),0.),caustic=smoothstep(.30,.95,.5-.5*dot(N,L))*(.35+.65*ndv);light=mix(albedo*vec3(.16,.26,.42),albedo*vec3(1.0,1.2,1.32),caustic)+env(reflect(-V,N),.05)*(.03+.55*F)+vec3(1.,1.04,1.08)*pow(max(dot(N,H),0.),170.)*3.2;
-  alpha=uAlpha*clamp(.64+.36*F+.22*caustic,0.,1.);
+  float ndv=max(dot(N,V),0.),caustic=smoothstep(.30,.95,.5-.5*dot(N,L))*(.35+.65*ndv);light=mix(vec3(.030,.033,.040),vec3(.27,.28,.30),caustic)+env(reflect(-V,N),.05)*(.04+.65*F)+vec3(1.,.97,.9)*pow(max(dot(N,H),0.),170.)*3.0;
+  alpha=uAlpha*clamp(.38+.50*F+.30*caustic,0.,1.);
  }
 
  if(uKind>1.5 && uKind<2.5){
@@ -1049,9 +1049,102 @@ function curvedTube(controls,radii,sides=10,steps=55){
  for(let i=0;i<pts.length;i++)for(let k=0;k<=sides;k++){const v=(i*(sides+1)+k)*8;for(let a=0;a<3;a++)data.vertices[v+a]=pts[i][a]+(data.vertices[v+a]-pts[i][a])*rs[i];}
  return data;
 }
-function bowlCrumple(p,w,t,seed){const c=smooth(.22,1,w);if(c<=.001)return p;const h=clamp(p[1]/3.2),ang=Math.atan2(p[0],p[2]),heave=Math.pow(.5+.5*Math.sin(t*16.3+seed),2),squash=c*(.085+.075*heave),buckle=c*h*(.085*Math.sin(3*ang+1.3+.9*Math.sin(t*1.7+seed))+.05*Math.sin(5*ang-t*2.3+seed*2)+.03*heave*Math.sin(7*ang+t*5.1)),grow=(1+squash*(.55+.9*Math.sin(h*3.14159)))*(1+buckle),tw=c*(h-.25)*.20*Math.sin(t*3.1+seed),cs=Math.cos(tw),sn=Math.sin(tw),x=p[0]*grow,z=p[2]*grow;return [cs*x+sn*z,p[1]*(1-squash)-c*h*h*.09*(.5+.5*Math.cos(ang))*(.6+.4*heave),-sn*x+cs*z-c*h*h*(.20+.12*heave)];}function teardropData(){return gridMesh(14,12,(u,v)=>{const a=u*TAU,th=.0001+(1-v)*(Math.PI-.0002),s=Math.sin(th),c=Math.cos(th),top=Math.max(0,c),w=s*(1-.34*top*top);return [w*Math.sin(a),c+.42*top*top*top,w*Math.cos(a)];});}const BOWL_SIZES=[1.12,.91,.72,.55,.40,.27,.205,.155];
-const BRONZE=[[.56,.331,.123],[.54,.32,.133],[.60,.387,.178],[.51,.324,.155],[.61,.407,.188],[.62,.43,.214],[.66,.448,.23],[.68,.468,.243]];
-class Bowl{
+function teardropData(){return gridMesh(9,7,(u,v)=>{const a=u*TAU,th=.0001+(1-v)*(Math.PI-.0002),s=Math.sin(th),c=Math.cos(th),top=Math.max(0,c),w=s*(1-.34*top*top);return [w*Math.sin(a),c+.42*top*top*top,w*Math.cos(a)];});}const BOWL_SIZES=[1.12,.91,.72,.55,.40,.27,.205,.155];
+const BOWL_ANGLES=(()=>{const w=BOWL_SIZES.map(s=>s*2.59*1.35+.35),sum=w.reduce((a,b)=>a+b,0),out=[0];for(let i=1;i<w.length;i++)out.push(out[i-1]+TAU*(w[i-1]+w[i])/(2*sum));return out;})();const BRONZE=[[.56,.331,.123],[.54,.32,.133],[.60,.387,.178],[.51,.324,.155],[.61,.407,.188],[.62,.43,.214],[.66,.448,.23],[.68,.468,.243]];
+/* ===== 흐르는 눈물 =====
+ * 낮은 단계에서는 작은 방울만 굴러떨어집니다. 눈물 양이 streamFrom을 넘으면 뺨에 물길이 보이기 시작하고,
+ * 절정에서는 눈 아래 전체가 물길이 되어 얼굴 끝에서 바닥까지 폭포처럼 쏟아집니다.
+ * 물길 하나 = 얼굴 표면을 따라가는 띠(rows) + 얼굴 끝에서 바닥까지 떨어지는 띠(fall).
+ * 방울은 물길을 타고 내려가다 끝에서 떨어집니다. 조율은 아래 FLOW의 숫자로 합니다.
+ */
+const FLOW={
+ rows:12,fall:7,cols:3,            // 띠를 나누는 칸 수 (많을수록 매끈하지만 무거움)
+ tearLen:1.15,tearHalf:.38,        // 눈물 길의 길이와 반폭 (볼 얼굴 좌표)
+ snotHalf:.05,                     // 콧물 길의 반폭
+ streamFrom:.26,                   // 눈물 양(0~1)이 이 값을 넘으면 물길이 보이기 시작
+ rate:tf=>tf*(3+200*tf*tf*tf),     // 초당 눈물방울 수 (눈물 양 1 = 절정에서 약 200개)
+ snotRate:sf=>sf*(2+30*sf*sf),     // 초당 콧물방울 수
+ size:tf=>lerp(.075,.042,tf)       // 방울 반지름: 적게 나올 때는 크게, 쏟아질 때는 잘게
+};
+class TearFlow{
+ constructor(owner,scene){
+  Object.assign(this,{owner,scene,strips:[],snotClock:0,tears:0,snot:0});
+  const R=scene.renderer,nc=FLOW.cols+1,nr=FLOW.rows+FLOW.fall+1,verts=[],indices=[],cache=(FLOW.rows+1)*nc*3;
+  for(let j=0;j<nr;j++)for(let i=0;i<nc;i++)verts.push(0,0,0,0,0,1,i/FLOW.cols,j<=FLOW.rows?j/FLOW.rows:1+(j-FLOW.rows)/FLOW.fall);
+  for(let j=0;j<nr-1;j++)for(let i=0;i<FLOW.cols;i++){const a=j*nc+i,c=a+nc;indices.push(a,a+1,c,a+1,c+1,c);}
+  /* 0,1 = 왼쪽·오른쪽 눈물, 2,3 = 왼쪽·오른쪽 콧물 */
+  for(const snot of [0,1])for(const side of [-1,1])this.strips.push({snot,side,key:'',age:0,ready:false,amount:0,splash:0,local:new Float32Array(cache),world:new Float32Array(cache),normal:new Float32Array((FLOW.rows+1)*3),endVel:[0,-1,0],mesh:R.mesh({vertices:verts,indices},true),mat:{kind:18,color:[.012,.014,.018],metal:0,rough:.05,alpha:0,glow:0},model:M.identity(),seed:side*1.7+snot*3.1+(owner.id||0)*.61});
+ }
+ draw(R){for(const s of this.strips)if(s.mat.alpha>.01)R.draw(s);}
+ /* 물길 위의 한 점 (u: 위에서 아래로 0~1, across: 왼쪽에서 오른쪽으로 -1~1) */
+ at(s,u,across,lift){
+  const nc=FLOW.cols+1,rf=clamp(u)*FLOW.rows,j=Math.min(FLOW.rows-1,Math.floor(rf)),fj=rf-j,cf=(clamp(across,-1,1)+1)/2*FLOW.cols,i=Math.min(FLOW.cols-1,Math.floor(cf)),fi=cf-i,w=s.world,out=[0,0,0];
+  for(let k=0;k<3;k++){const a=lerp(w[(j*nc+i)*3+k],w[(j*nc+i+1)*3+k],fi),b=lerp(w[((j+1)*nc+i)*3+k],w[((j+1)*nc+i+1)*3+k],fi);out[k]=lerp(a,b,fj)+s.normal[j*3+k]*lift;}
+  return out;
+ }
+ spawn(side,across){
+  const s=this.strips[side<0?0:1],tf=this.tears;if(!s.ready)return;
+  this.scene.spawnDrop({flow:this,strip:s,across,r:FLOW.size(tf)*(.75+.5*Math.random())*this.owner.scale,well:.08+.10*Math.random(),slide:lerp(1.15,.5,tf)*(.8+.4*Math.random()),scale:this.owner.scale});
+ }
+ update(t,dt,tears,snot){
+  const o=this.owner,sc=o.scale,root=Math.sqrt(sc),C=FLOW.cols,nc=C+1,R0=FLOW.rows,nrow=R0+1,key=o.flowKey(),ctr=o.toWorld(o.flowCenter),c1=Math.floor(C/2)*3,c2=Math.ceil(C/2)*3,g=8.5*root,ground=-.115;
+  this.tears=tears;this.snot=snot;
+  for(const s of this.strips){
+   const flow=s.snot?snot:tears;
+   if(flow<=.004){s.mat.alpha=0;continue;}
+   /* 얼굴 표면을 재는 무거운 계산은 표정이 달라졌을 때만 다시 한다 */
+   if(!s.ready||s.key!==key||++s.age>8){
+    s.key=key;s.age=0;
+    for(let j=0;j<nrow;j++)for(let i=0;i<nc;i++)s.local.set(s.snot?o.snotLocal(s.side,i/C*2-1,j/R0,.018):o.tearLocal(s.side,i/C*2-1,j/R0,.018),(j*nc+i)*3);
+   }
+   /* 몸통의 일그러짐과 떨림은 매 프레임 따라간다 */
+   const w=s.world,N=s.normal;o.toWorldArray(s.local,w,nrow*nc);
+   for(let j=0;j<nrow;j++){
+    const ja=Math.max(0,j-1)*nc*3,jb=Math.min(R0,j+1)*nc*3,jj=j*nc*3,e=jj+C*3;
+    const ax=w[jb+c1]+w[jb+c2]-w[ja+c1]-w[ja+c2],ay=w[jb+c1+1]+w[jb+c2+1]-w[ja+c1+1]-w[ja+c2+1],az=w[jb+c1+2]+w[jb+c2+2]-w[ja+c1+2]-w[ja+c2+2],bx=w[e]-w[jj],by=w[e+1]-w[jj+1],bz=w[e+2]-w[jj+2];
+    let nx=ay*bz-az*by,ny=az*bx-ax*bz,nz=ax*by-ay*bx;const len=Math.hypot(nx,ny,nz)||1;
+    if(nx*((w[jj+c1]+w[jj+c2])*.5-ctr[0])+ny*((w[jj+c1+1]+w[jj+c2+1])*.5-ctr[1])+nz*((w[jj+c1+2]+w[jj+c2+2])*.5-ctr[2])<0){nx=-nx;ny=-ny;nz=-nz;}
+    N[j*3]=nx/len;N[j*3+1]=ny/len;N[j*3+2]=nz/len;
+   }
+   s.ready=true;
+   const a=s.amount=s.snot?smooth(.10,.85,flow):smooth(FLOW.streamFrom,1,flow);
+   s.mat.alpha=Math.min(.999,a*1.6);s.mat.glow=a;
+   /* 물길 끝에서 떠나는 속도. 방울도 이 속도로 떨어지기 시작한다 */
+   const jl=R0*nc*3,jp=(R0-1)*nc*3,speed=(1.0+1.1*a)*root,v0=s.endVel;
+   let tx=w[jl+c1]+w[jl+c2]-w[jp+c1]-w[jp+c2],ty=w[jl+c1+1]+w[jl+c2+1]-w[jp+c1+1]-w[jp+c2+1],tz=w[jl+c1+2]+w[jl+c2+2]-w[jp+c1+2]-w[jp+c2+2];const tl=Math.hypot(tx,ty,tz)||1;
+   v0[0]=tx/tl*speed+N[R0*3]*.32*root;v0[1]=ty/tl*speed+N[R0*3+1]*.32*root;v0[2]=tz/tl*speed+N[R0*3+2]*.32*root;
+   if(a<=.002)continue;
+   const v=s.mesh.verts;
+   for(let j=0;j<nrow;j++){
+    const u=j/R0,wf=Math.min(1,(.12+.88*a)*(.5+.5*smooth(0,.45,u))*(1+.09*Math.sin(u*11-t*2.6+s.seed))),jj=j*nc*3,nx=N[j*3],ny=N[j*3+1],nz=N[j*3+2];
+    let bx=w[jj+C*3]-w[jj],by=w[jj+C*3+1]-w[jj+1],bz=w[jj+C*3+2]-w[jj+2];const bl=Math.hypot(bx,by,bz)||1;bx/=bl;by/=bl;bz/=bl;
+    for(let i=0;i<nc;i++){
+     const e=i/C*2-1,cf=(e*wf+1)/2*C,c0=Math.min(C-1,Math.floor(cf)),f=cf-c0,lift=(.010+.05*a)*sc*(1-e*e),p=jj+c0*3,q=(j*nc+i)*8,hx=nx+bx*e*.85,hy=ny+by*e*.85,hz=nz+bz*e*.85,hl=Math.hypot(hx,hy,hz)||1;
+     v[q]=w[p]+(w[p+3]-w[p])*f+nx*lift;v[q+1]=w[p+1]+(w[p+4]-w[p+1])*f+ny*lift;v[q+2]=w[p+2]+(w[p+5]-w[p+2])*f+nz*lift;v[q+3]=hx/hl;v[q+4]=hy/hl;v[q+5]=hz/hl;
+    }
+   }
+   /* 얼굴 끝에서 바닥까지: 포물선으로 떨어지며 좁아지는 띠 */
+   const last=R0*nc*8;let mx=0,my=0,mz=0;for(let i=0;i<nc;i++){mx+=v[last+i*8]/nc;my+=v[last+i*8+1]/nc;mz+=v[last+i*8+2]/nc;}
+   const fallTime=(v0[1]+Math.sqrt(v0[1]*v0[1]+2*g*Math.max(.01,my-ground)))/g;
+   for(let f=1;f<=FLOW.fall;f++){
+    const tau=fallTime*f/FLOW.fall,shrink=1-.40*f/FLOW.fall,drop=.5*g*tau*tau;
+    for(let i=0;i<nc;i++){const b=last+i*8,q=b+f*nc*8,hx=v[b+3],hz=v[b+5],hl=Math.hypot(hx,.1,hz)||1;
+     v[q]=mx+(v[b]-mx)*shrink+v0[0]*tau;v[q+1]=my+(v[b+1]-my)*shrink+v0[1]*tau-drop;v[q+2]=mz+(v[b+2]-mz)*shrink+v0[2]*tau;v[q+3]=hx/hl;v[q+4]=.1/hl;v[q+5]=hz/hl;}
+   }
+   this.scene.renderer.updateMesh(s.mesh);
+   /* 떨어진 자리의 물보라 */
+   if(a>.35&&!s.snot){
+    s.splash+=dt*(6+14*a);
+    if(s.splash>=1){s.splash=0;const x=mx+v0[0]*fallTime,z=mz+v0[2]*fallTime;if(this.scene.splashes.length<75)this.scene.splashes.push({p:[x,-.119,z],life:0,size:.05*sc});for(let n=0;n<4;n++)this.scene.spawnDrop({free:true,k:1,p:[x,-.10,z],v:-(.8+1.2*Math.random())*root,vx:(Math.random()-.5)*1.5*root,vz:(Math.random()-.5)*1.5*root,r:.028*sc*(.6+.8*Math.random()),scale:sc});}
+   }
+  }
+  /* 콧물방울 */
+  this.snotClock+=dt*FLOW.snotRate(snot)*this.scene.tearAmount;
+  for(let n=0;this.snotClock>=1&&n<3;n++){this.snotClock--;const s=this.strips[Math.random()<.5?2:3];if(s.ready)this.scene.spawnDrop({flow:this,strip:s,across:Math.random()*1.6-.8,r:FLOW.size(snot)*.8*(.75+.5*Math.random())*sc,well:.08,slide:.5*(.8+.4*Math.random()),scale:sc});}
+ }
+}
+
+
  constructor(scene,id,pos,scale,angle){
   Object.assign(this,{scene,id,pos,home:pos.slice(),scale,homeScale:scale,angle,rot:[0,0,0],energy:0,open:0,expression:0,blink:0,pulse:0,tearFlow:0,parts:[],streams:[],dropClock:0,hitAt:-10});
   const mesh=id===0?scene.sculpt:id<5?scene.sculptMid:scene.sculptLow,body={kind:1,color:BRONZE[id],metal:.90,rough:.33};
@@ -1060,14 +1153,14 @@ class Bowl{
   this.parts.push({name:'trim',mesh:mesh.trim,mat:{...body,color:BRONZE[id],rough:.39}});
   this.parts.push({name:'foot',mesh:mesh.foot,mat:{kind:6,color:[.15,.08,.025],metal:.8,rough:.42}});
   for(const name of ['cavity','eyes','nostrils'])this.parts.push({name,mesh:mesh[name],mat:{kind:name==='nostrils'?9:14,color:[.009,.004,.0015],metal:0,rough:.98}});
-  this.matrix=M.model(pos,scale);
+  this.matrix=M.model(pos,scale);this.flowCenter=[0,1.6,0];this.flow=new TearFlow(this,scene);
   for(const side of [-1,1]){
    const rows=28,n=5,verts=[],indices=[];for(let j=0;j<=rows;j++)for(let k=0;k<=n;k++)verts.push(0,0,0,0,0,1,k/n,j/rows);
    for(let j=0;j<rows;j++)for(let k=0;k<n;k++){const a=j*(n+1)+k,c=a+n+1;indices.push(a,a+1,c,a+1,c+1,c);}
    
   }
  }
- toWorld(q){return M.point(this.matrix,bowlCrumple(q,this.blink,this.now||0,this.id*2.19)).slice(0,3);} surfacePoint(x,y,extra=0){return this.toWorld(faceXYZ(x,y,{open:this.open,grief:this.expression,blink:this.blink},extra));} snotPoint(side,u,extra=0){const g=this.expression,w=this.blink,pose={open:this.open,grief:g,blink:w},nx=.185+.018*g+.03*w,ny=1.862+.012*w-(.017+.014*g+.034*w)*.8,wd=.585+this.open*.108+w*this.open*.20,lipY=Math.min(ny-.02,mouthContour(Math.acos(clamp(nx/wd,-1,1)),pose)[1]+.035);return this.toWorld(faceXYZ(side*nx,lerp(ny,lipY,u),pose,extra));}
+ toWorldArray(src,dst,n){const m=this.matrix,c=smooth(.22,1,this.blink),t=this.now||0,seed=this.id*2.19,heave=Math.pow(.5+.5*Math.sin(t*16.3+seed),2),squash=c*(.085+.075*heave),wave=.9*Math.sin(t*1.7+seed),twist=c*.20*Math.sin(t*3.1+seed);for(let i=0;i<n;i++){let x=src[i*3],y=src[i*3+1],z=src[i*3+2];if(c>.001){const h=clamp(y/3.2),ang=Math.atan2(x,z),buckle=c*h*(.085*Math.sin(3*ang+1.3+wave)+.05*Math.sin(5*ang-t*2.3+seed*2)+.03*heave*Math.sin(7*ang+t*5.1)),grow=(1+squash*(.55+.9*Math.sin(h*3.14159)))*(1+buckle),tw=twist*(h-.25),cs=Math.cos(tw),sn=Math.sin(tw),gx=x*grow,gz=z*grow;y=y*(1-squash)-c*h*h*.09*(.5+.5*Math.cos(ang))*(.6+.4*heave);x=cs*gx+sn*gz;z=-sn*gx+cs*gz-c*h*h*(.20+.12*heave);}dst[i*3]=m[0]*x+m[4]*y+m[8]*z+m[12];dst[i*3+1]=m[1]*x+m[5]*y+m[9]*z+m[13];dst[i*3+2]=m[2]*x+m[6]*y+m[10]*z+m[14];}} toWorld(q){const out=[0,0,0];this.toWorldArray(q,out,1);return out;} flowKey(){return Math.round(this.open*60)+'|'+Math.round(this.expression*60)+'|'+Math.round(this.blink*60);} tearLocal(side,across,u,extra){return faceXYZ(side*(.80+.12*u)+across*FLOW.tearHalf,2.40-this.open*.27-FLOW.tearLen*u,{open:this.open,grief:this.expression,blink:this.blink},extra);} snotLocal(side,across,u,extra){const g=this.expression,w=this.blink,pose={open:this.open,grief:g,blink:w},nx=.185+.018*g+.03*w,ny=1.862+.012*w-(.017+.014*g+.034*w)*.8,wd=.585+this.open*.108+w*this.open*.20,lipY=Math.min(ny-.02,mouthContour(Math.acos(clamp(nx/wd,-1,1)),pose)[1]+.035);return faceXYZ(side*nx+across*FLOW.snotHalf,lerp(ny,lipY,u),pose,extra);}
  tick(t,dt,engine){
   const v=engine?.voices[this.id],e=this.energy=v?v.level:0;
   const lv=clamp(v?.lv||0,0,CRY_MAX),k=clamp((lv-1)/(CRY_MAX-1)),poseTarget=sampleCryPose(lv);
@@ -1115,12 +1208,12 @@ class Bowl{
    }
    this.scene.renderer.updateMesh(s.mesh);
   }
-  this.now=t;const rate=this.tearFlow*(2.4+4.8*this.tearFlow*this.tearFlow)*this.scene.tearAmount*(this.id<5?1:.7);this.snotClock=(this.snotClock||0)+dt*(this.snotFlow||0)*(1.6+4.4*(this.snotFlow||0))*this.scene.tearAmount;if(this.snotClock>=1){this.snotClock=0;const nose=Math.random()<.5?-1:1;this.scene.spawnDrop(this,u=>this.snotPoint(nose,u,.055),(.075+Math.random()*.03)*this.scale,.30,.55);}
+  this.now=t;this.flow.update(t,dt,this.tearFlow,this.snotFlow||0);const rate=FLOW.rate(this.tearFlow)*this.scene.tearAmount*(this.id<5?1:.7);
   this.dropClock+=dt*rate;
   let limit=0;while(this.dropClock>=1&&limit++<3){this.dropClock--;for(const side of [Math.random()<.5?-1:1]){
    /* at the top stages tears well up along the whole lower lid, not from one spot */
    const x=side*(.73-.26*k+Math.random()*(.26+.42*k)),y=2.37-this.open*.26;
-   this.scene.spawnTear(this,x,y,(.095+Math.random()*.045+.03*k)*this.scale,1.05);
+   this.flow.spawn(side,Math.random()*2-1);
   }}
  }
 }
@@ -1242,19 +1335,19 @@ class AppendixCreature{
   twig.push(transformData(sphereData(12,8),M.model([-2.72,0,0],[.03,.108,.108])));
   twig.push(transformData(sphereData(12,8),M.model([1.42,.05,.01],[.06,.056,.056])));
   this.stick={mesh:R.mesh(combineData(twig)),mat:{kind:17,color:[.115,.075,.045],metal:0,rough:.9},pos:[-2.35,.10,3.56],rot:[0,-.32,-.08]};
-  this.plinth={mesh:R.mesh(lathe([[.01,-.34],[4.4,-.34],[4.4,-.12],[4.27,-.035],[.01,-.035]],96)),mat:{kind:0,color:[.026,.028,.031],metal:.20,rough:.65}};
+  this.flowCenter=[0,1.0,1.2];this.flow=new TearFlow(this,scene);this.plinth={mesh:R.mesh(lathe([[.01,-.34],[4.4,-.34],[4.4,-.12],[4.27,-.035],[.01,-.035]],96)),mat:{kind:0,color:[.026,.028,.031],metal:.20,rough:.65}};
  }
- pose(){return {open:this.open,grief:this.expression,blink:this.blink};} snotPoint(side,u,extra=0){const ss=lerp(.905,.9962,u),ps=Math.acos(Math.pow(Math.min(1,.30/frogRing(ss).rx),1.25));return M.point(this.matrix,frogSkin(side>0?ps:Math.PI-ps,ss,this.pose(),extra+.03,true)).slice(0,3);}
+ pose(){return {open:this.open,grief:this.expression,blink:this.blink};} toWorldArray(src,dst,n){const m=this.matrix;for(let i=0;i<n;i++){const x=src[i*3],y=src[i*3+1],z=src[i*3+2];dst[i*3]=m[0]*x+m[4]*y+m[8]*z+m[12];dst[i*3+1]=m[1]*x+m[5]*y+m[9]*z+m[13];dst[i*3+2]=m[2]*x+m[6]*y+m[10]*z+m[14];}} toWorld(q){const out=[0,0,0];this.toWorldArray(q,out,1);return out;} flowKey(){return Math.round(this.open*40)+'|'+Math.round(this.expression*60)+'|'+Math.round(this.blink*60);} tearLocal(side,across,u,extra){const psi=lerp(.78,.03,u);return frogSkin(side>0?psi:Math.PI-psi,.477+.06*u+across*.055,this.pose(),extra+.03,true);} snotLocal(side,across,u,extra){const ss=lerp(.905,.9962,u),ps=Math.acos(Math.pow(Math.min(1,.30/frogRing(ss).rx),1.25))+across*.05;return frogSkin(side>0?ps:Math.PI-ps,ss,this.pose(),extra+.03,true);}
  /* tears use the bowls' face coordinates: x picks the side, falling y slides from the eye rim down the cheek to the lip */
- surfacePoint(x,y,extra=0){const sl=clamp((2.37-y)/.72),psi=lerp(.78,.03,sl);return M.point(this.matrix,frogSkin(x>0?psi:Math.PI-psi,.477+.06*sl,this.pose(),extra+.03,true)).slice(0,3);}
- contains(x,y){const s=this.scene,c=s.project([0,1.7,.1]),a=s.project([-2.5,.2,2]),b=s.project([2.5,.2,2]),top=s.project([0,3.2,-.8]);return x>Math.min(a.x,b.x)-15&&x<Math.max(a.x,b.x)+15&&y>top.y-15&&y<c.y+Math.abs(a.y-c.y)+30;}
+
+ contains(x,y){const s=this.scene,c=s.project([0,1.7,.1]),a=s.project([-2.5,.2,2]),b=s.project([2.5,.2,2]),top=s.project([0,3.2,-.8]);return x>Math.min(a.x,b.x)-40&&x<Math.max(a.x,b.x)+40&&y>top.y-40&&y<c.y+Math.abs(a.y-c.y)+50;}
  beginHold(){this.held=true;this.touchAt=performance.now()/1000;}
  endHold(){this.held=false;this.lastK=null;this.travel=0;}
  reach(k){const z=lerp(-2.70,.29,k);this.touch=[-.14,this.topY(z)+.27+.31,z];}
  point(x,y){
   const s=this.scene,front=s.project([0,this.topY(.29)+.5,.29]),back=s.project([0,this.topY(-2.7)+.5,-2.7]);
   const d=[front.x-back.x,front.y-back.y],len=d[0]*d[0]+d[1]*d[1];
-  const k=clamp(((x-back.x)*d[0]+(y-back.y)*d[1])/Math.max(100,len));
+  const px=Math.sqrt(Math.max(100,len)),along=((x-back.x)*d[0]+(y-back.y)*d[1])/px;if(this.lastK===null||!this.grip)this.grip={along,k:clamp(along/px)};let k=clamp(this.grip.k+(along-this.grip.along)/Math.max(px,170));if(k<=0||k>=1)this.grip={along,k};
   /* every .8 of a back-length actually scraped counts as one more stroke */
   if(this.lastK!==null&&performance.now()/1000-this.touchAt<.3){this.travel+=Math.abs(k-this.lastK);if(this.travel>=.8){this.travel=0;this.climb();}}
   if(this.lastK===null)this.clickK=k;const crossed=Math.floor(Math.abs(k-this.clickK)*13+1e-9);if(crossed)this.clickK+=Math.sign(k-this.clickK)*crossed/13;this.lastK=k;this.reach(k);this.touchAt=performance.now()/1000;return crossed;
@@ -1280,8 +1373,8 @@ class AppendixCreature{
   this.matrix=M.model([.022*vib*Math.sin(t*53),.017*vib*Math.sin(t*8),0],1,[-.016*vib,.10+Math.sin(t*9)*vib*.014,Math.sin(t*7)*vib*.018]);
   for(const p of this.parts){p.model=this.matrix;p.open=this.open;p.expression=this.expression;p.blink=this.blink;p.energy=0;p.pulse=0;p.seed=2.38;}
   this.tearFlow=lerp(this.tearFlow,at([0,.20,.40,.60,.82,1]),1-Math.exp(-dt*2.4));
-  this.dropClock+=dt*this.tearFlow*(2.2+this.tearFlow*6)*this.scene.tearAmount;
-  if(this.dropClock>1){this.dropClock=0;const eye=Math.random()<.5?-1:1;this.scene.spawnTear(this,eye*(.75+Math.random()*.20),2.37,.10+Math.random()*.05+.03*k,.72);}this.snotClock=(this.snotClock||0)+dt*this.snotFlow*(1.6+4.4*this.snotFlow)*this.scene.tearAmount;if(this.snotClock>=1){this.snotClock=0;const nose=Math.random()<.5?-1:1;this.scene.spawnDrop(this,u=>this.snotPoint(nose,u,.04),.085+Math.random()*.03,.30,.60);}
+  this.dropClock+=dt*FLOW.rate(this.tearFlow)*this.scene.tearAmount;
+  while(this.dropClock>=1){this.dropClock--;this.flow.spawn(Math.random()<.5?-1:1,Math.random()*2-1);}this.flow.update(t,dt,this.tearFlow,this.snotFlow);
   /* snot: down the snout from each nostril to the upper lip, then a strand that stretches, drips and starts again */
   this.snotFlow=lerp(this.snotFlow,at([0,0,.05,.32,.66,1]),1-Math.exp(-dt*1.4));
   const pose=this.pose(),flow=this.snotFlow;
@@ -1310,12 +1403,12 @@ class Scene{
   this.floor={mesh:R.mesh(planeData),pos:[0,-.13,0],scale:[40,1,40],mat:{kind:2,color:[.022,.026,.029],metal:.8,rough:.18}};
   this.sculpt=createBowlSculpt(this);this.sculptMid=createBowlSculpt(this,.67);this.sculptLow=createBowlSculpt(this,.40);
   this.bowls=NOTES.map((_,i)=>{
-   const a=i*TAU/NOTES.length,sc=BOWL_SIZES[i],ring=i<5?6.95:8.15;
+   const a=BOWL_ANGLES[i],sc=BOWL_SIZES[i],ring=6.4;
    const pos=[Math.sin(a)*ring,-.13+sc*.12,Math.cos(a)*ring];
    return new Bowl(this,i,pos,sc,a);
   });
   this.rippleValues=new Float32Array(32);
-  this.dropBatch=R.makeInstances(teardropData(),360,{kind:13,color:[.59,.71,.77],metal:.06,rough:.04,alpha:.93});
+  this.dropBatch=R.makeInstances(teardropData(),1500,{kind:13,color:[.59,.71,.77],metal:.06,rough:.04,alpha:.93});
   this.buildTemple();this.buildMallet();this.creature=new AppendixCreature(this);this.resize(innerWidth,innerHeight);
   this.mallet.pos=this.mallet.rest.slice();for(const b of this.bowls)b.rot[1]=b.angle;
  }
@@ -1376,7 +1469,7 @@ class Scene{
   const a=this.width/this.height,c=this.camera;let target,eye;
   if(this.appendix){
    c.fov=42*Math.PI/180;const pitch=this.appendixOrbit.pitch,yaw=this.appendixViewAngle,dir=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch)];
-   const base=Math.max(12.8,4.15/(Math.tan(c.fov/2)*a*.88)),dist=base*this.appendixOrbit.zoom;target=[0,1.48,-.25];eye=V.add(target,V.mul(dir,dist));
+   const base=1.7*Math.max(12.8,4.15/(Math.tan(c.fov/2)*a*.88)),dist=base*this.appendixOrbit.zoom;target=[0,1.48,-.25];eye=V.add(target,V.mul(dir,dist));
    c.offset=this.height<500?.045:.08;
   }else{
    c.fov=(this.mobile?46:40)*Math.PI/180;target=this.mainTarget;
@@ -1391,9 +1484,9 @@ class Scene{
    const angle=this.viewAngle,p=[Math.sin(angle)*8.7-Math.cos(angle)*3.2,.23,Math.cos(angle)*8.7+Math.sin(angle)*3.2];this.mallet.rest=p;
   }
  }
- focus(i){const count=this.bowls.length,next=((i%count)+count)%count;let desired=next*TAU/count;while(desired-this.targetAngle>Math.PI)desired-=TAU;while(desired-this.targetAngle< -Math.PI)desired+=TAU;this.targetAngle=desired;this.focusIndex=next;}
- turn(dx,dy){if(this.appendix){this.appendixTargetAngle-=dx*.005;this.appendixOrbit.pitch=clamp(this.appendixOrbit.pitch+dy*.002,.14,.72);return;}this.targetAngle-=dx*.005;this.orbit.pitch=clamp(this.orbit.pitch+dy*.002,.30,.82);this.focusIndex=((Math.round(this.targetAngle/(TAU/this.bowls.length))%this.bowls.length)+this.bowls.length)%this.bowls.length;if(Math.abs(dy)>.1)this.computeFit();}
- zoom(factor){if(this.appendix){this.appendixOrbit.zoom=clamp(this.appendixOrbit.zoom*factor,.72,1.35);return;}this.orbit.zoom=clamp(this.orbit.zoom*factor,.52,1.33);}
+ focus(i){const count=this.bowls.length,next=((i%count)+count)%count;let desired=this.bowls[next].angle;while(desired-this.targetAngle>Math.PI)desired-=TAU;while(desired-this.targetAngle< -Math.PI)desired+=TAU;this.targetAngle=desired;this.focusIndex=next;}
+ turn(dx,dy){if(this.appendix){this.appendixTargetAngle-=dx*.005;this.appendixOrbit.pitch=clamp(this.appendixOrbit.pitch+dy*.002,.14,.72);return;}this.targetAngle-=dx*.005;this.orbit.pitch=clamp(this.orbit.pitch+dy*.002,.30,.82);this.focusIndex=this.bowls.reduce((best,b)=>Math.cos(b.angle-this.targetAngle)>Math.cos(this.bowls[best].angle-this.targetAngle)?b.id:best,0);if(Math.abs(dy)>.1)this.computeFit();}
+ zoom(factor){if(this.appendix){this.appendixOrbit.zoom=clamp(this.appendixOrbit.zoom*factor,.5,1.35);return;}this.orbit.zoom=clamp(this.orbit.zoom*factor,.52,1.33);}
  resetCamera(){if(this.appendix){this.appendixViewAngle=this.appendixTargetAngle=.52;this.appendixOrbit={pitch:.30,zoom:1};this.updateCamera();return;}this.viewAngle=0;this.targetAngle=0;this.focusIndex=0;this.orbit={pitch:.365,zoom:1};this.computeFit();this.updateCamera();}
  project(p){const q=M.point(this.camera.vp,p);return {x:(q[0]/q[3]*.5+.5)*this.width,y:(.5-q[1]/q[3]*.5)*this.height,z:q[2]/q[3],w:q[3]};}
  ray(x,y){const c=this.camera,tan=Math.tan(c.fov/2),nx=(x/this.width*2-1)*tan*this.width/this.height,ny=(1-y/this.height*2-c.offset)*tan;return V.norm(V.add(c.forward,V.add(V.mul(c.right,nx),V.mul(c.up,ny))));}
@@ -1407,18 +1500,18 @@ class Scene{
  }
  hit(i,t,strength){const b=this.bowls[i],m=this.mallet;b.hitAt=t+.10;m.from=m.pos.slice();m.target=M.point(b.matrix,[-1.89,2.49,1.92]).slice(0,3);m.time=t;m.scale=clamp(b.scale*.68,.30,.86);this.rings.push({id:i,t:t+.1,strength});if(this.rings.length>22)this.rings.shift();}
  dripFrom(owner,p,r){if(this.drops.length>=330)this.drops.shift();this.drops.push({owner,x:0,y:0,r,p,life:1,v:.3,floor:-.115,slide:0});}
- spawnDrop(owner,path,r,well,slide){if(this.drops.length>=330)this.drops.shift();this.drops.push({owner,path,r,p:path(0),life:0,v:0,k:0,sp:0,well,slide,free:false,floor:-.115});} spawnTear(owner,x,y,r,len=1){const side=Math.sign(x)||1,lift=r*.55/Math.max(.16,owner.scale);this.spawnDrop(owner,u=>owner.surfacePoint(x+side*.12*u,y-len*u,lift),r,.20+Math.random()*.16,.75+Math.random()*.35);}
+ spawnDrop(d){if(this.drops.length>=1450)this.drops.shift();this.drops.push(Object.assign({life:0,v:0,vx:0,vz:0,k:0,sp:0,well:0,slide:0,free:false,floor:-.115,scale:1,p:[0,0,0]},d));}
  updateDrops(t,dt){
   for(const d of this.drops){
    d.life+=dt;
-   if(d.life<d.well+d.slide){const u=clamp((d.life-d.well)/d.slide);d.p=d.path(u*u*(.5+.5*u));d.k=.3+.7*smooth(0,d.well,d.life);d.sp=u;}
-   else{if(!d.free){d.free=true;d.k=1;d.v=d.owner.scale*1.1;}d.v+=dt*8.5*Math.sqrt(d.owner.scale);d.p[1]-=d.v*dt;}
+   if(!d.free&&d.life<d.well+d.slide){const u=clamp((d.life-d.well)/d.slide);d.p=d.flow.at(d.strip,u*(.35+.65*u),d.across,d.r*.45);d.k=.3+.7*smooth(0,d.well,d.life);d.sp=u;}
+   else{if(!d.free){d.free=true;d.k=1;const e=d.strip.endVel,j=.25*Math.sqrt(d.scale);d.vx=e[0]+(Math.random()-.5)*j;d.v=-e[1];d.vz=e[2]+(Math.random()-.5)*j;}d.v+=dt*8.5*Math.sqrt(d.scale);d.p[0]+=d.vx*dt;d.p[1]-=d.v*dt;d.p[2]+=d.vz*dt;}
    if(d.p[1]<=d.floor){if(this.splashes.length<75)this.splashes.push({p:[d.p[0],-.119,d.p[2]],life:0,size:d.r});d.dead=true;}
   }
   this.drops=this.drops.filter(d=>!d.dead&&d.life<4);
   for(const s of this.splashes)s.life+=dt;this.splashes=this.splashes.filter(s=>s.life<.85);
   const batch=this.dropBatch;let i=0;
-  for(const d of this.drops){const tall=d.free?1.05+clamp(d.v*.2,0,.55):.78+.34*d.sp,wide=d.r*d.k/Math.sqrt(Math.max(.85,tall));batch.matrices.set(M.model(d.p,[wide,d.r*d.k*tall,wide]),i++*16);}
+  for(const d of this.drops){const tall=d.free?1.05+clamp(d.v*.2,0,.55):.78+.34*d.sp,wide=d.r*d.k/Math.sqrt(Math.max(.85,tall)),mm=batch.matrices,o=i++*16;mm[o]=wide;mm[o+5]=d.r*d.k*tall;mm[o+10]=wide;mm[o+12]=d.p[0];mm[o+13]=d.p[1];mm[o+14]=d.p[2];mm[o+15]=1;}
   this.renderer.uploadInstances(batch,i);
  }
  tick(t,dt,audio){
@@ -1444,18 +1537,18 @@ class Scene{
    else{for(const b of this.bowls)for(const p of b.parts){if(mirror&&this.sculptLow[p.name])R.draw({...p,mesh:this.sculptLow[p.name]});else R.draw(p);}for(const p of this.mallet.parts)R.draw(p);}
    if(mirror)continue;
    if(!this.appendix)for(const b of this.bowls){
-    for(const s of b.streams)if(s.mat.alpha>.012)R.draw(s);
+    b.flow.draw(R);
     const e=Math.max(0,b.energy),base=.72+b.scale*.58;
     if(e>.02){
       for(let n=0;n<4;n++){
-        const k=(t*(.60+n*.10)+b.id*.9+n*.21)%1,alpha=(.10-.018*n)*e,sc=base+k*(.95+.22*n)*b.scale;
-        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+.58*b.scale,b.pos[2]],scale:sc,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.98,.72,.44],glow:.52,alpha,add:true}});
-        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+.58*b.scale,b.pos[2]],scale:sc*.88,rot:[0,0,Math.PI/2],mat:{kind:3,color:[.98,.72,.44],glow:.45,alpha:alpha*.82,add:true}});
-        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+.58*b.scale,b.pos[2]],scale:sc*.88,rot:[0,Math.PI/2,0],mat:{kind:3,color:[.98,.72,.44],glow:.45,alpha:alpha*.82,add:true}});
+        const k=(t*(.42+n*.07)+b.id*.9+n*.25)%1,alpha=(.15-.02*n)*e*(1-k)*(1-k),sc=b.scale*(2.75+k*(2.6+.5*n));
+        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+(1.75+.35*n)*b.scale,b.pos[2]],scale:sc,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.98,.72,.44],glow:.52,alpha,add:true}});
+        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+(.55+.30*n)*b.scale,b.pos[2]],scale:sc*1.05,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.98,.72,.44],glow:.45,alpha:alpha*.82,add:true}});
+        R.draw({mesh:this.ring,pos:[b.pos[0],b.pos[1]+(2.95+.30*n)*b.scale,b.pos[2]],scale:sc*.95,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.98,.72,.44],glow:.45,alpha:alpha*.82,add:true}});
       }
     }
    }
-   if(this.dropBatch.instances)R.draw(this.dropBatch);
+   if(this.appendix)this.creature.flow.draw(R);if(this.dropBatch.instances)R.draw(this.dropBatch);
    for(const s of this.splashes){const k=s.life/.85,sc=.03+k*.25;R.draw({mesh:this.ring,pos:s.p,scale:sc,rot:[Math.PI/2,0,0],mat:{kind:3,color:[.75,.58,.34],glow:.5,alpha:(1-k)*.28,add:true}});}
   }
  }
@@ -1468,7 +1561,7 @@ const speakerOn='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const speakerOff='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 4 6 8H3v8h3l5 4V4Z"/><path d="m16 9 6 6m0-6-6 6"/></svg>';
 class App{
  constructor(){
-  this.audio=new AudioEngine();Object.assign(this.audio,{reference:.28,fracture:.08,original:false,uiSound:false});
+  this.audio=new AudioEngine();Object.assign(this.audio,{reference:.28,fracture:.08,original:false,uiSound:true});
   this.started=false;this.ready=false;this.pointers=new Map();this.lastHit=Array(8).fill(-100);this.time=0;this.force=.78;this.wind=false;this.nextWind=0;this.cameraMode=false;this.frames=0;this.fps=60;this.errors=[];this.slow=0;this.lastFrame=performance.now();this.test=new URLSearchParams(location.search).has('test');this.dpr=Math.min(devicePixelRatio||1,innerWidth<760?1.50:1.70);
  }
  async init(){
@@ -1485,7 +1578,7 @@ class App{
  }
  async start(){
   if(this.startPromise)return this.startPromise;if(this.started){if(this.audio.ctx?.state==='suspended')await this.audio.ctx.resume();return;}
-  this.startPromise=(async()=>{try{await this.audio.start();this.started=true;this.time=this.audio.ctx.currentTime;this.startAudioClock();document.body.classList.add('playing');$('#intro').setAttribute('aria-hidden','true');$('#start').blur();this.updateLabels(true);}catch(e){this.fail(e);}})();
+  this.startPromise=(async()=>{try{await this.audio.start();this.started=true;this.time=this.audio.ctx.currentTime;this.startAudioClock();document.body.classList.add('playing');$('#intro').setAttribute('aria-hidden','true');$('#start').blur();this.updateLabels(true);this.audio.uiTing('open');}catch(e){this.fail(e);}})();
   await this.startPromise;this.startPromise=null;
  }
  toast(text){$('#toast').textContent=text;$('#toast').classList.add('show');clearTimeout(this.toastTimer);this.toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),1900);}
@@ -1521,7 +1614,7 @@ class App{
   $('#start').addEventListener('click',()=>this.start());$('#retry').addEventListener('click',()=>location.reload());
   $('#tune').addEventListener('click',()=>this.settings($('#settings').hidden));$('#closeSettings').addEventListener('click',()=>this.settings(false));
   $('#mute').addEventListener('click',()=>{this.audio.muted=!this.audio.muted;$('#mute').innerHTML=this.audio.muted?speakerOff:speakerOn;$('#mute').setAttribute('aria-pressed',String(this.audio.muted));$('#mute').setAttribute('aria-label',this.audio.muted?'소리 켜기':'소리 끄기');});
-  $('#wind').addEventListener('click',async()=>{await this.start();if(this.audio.ready)this.setWind(!this.wind);});$('#damp').addEventListener('click',()=>this.damp());$('#dampMini').addEventListener('click',()=>this.damp());$('#showFrog').addEventListener('pointerdown',e=>e.stopPropagation());
+  $('#wind').addEventListener('click',async()=>{await this.start();if(this.audio.ready)this.setWind(!this.wind);});$('#damp').addEventListener('click',()=>this.damp());$('#dampMini').addEventListener('click',()=>{this.damp();this.audio.uiTing('close');});$('#showFrog').addEventListener('pointerdown',e=>e.stopPropagation());
   $('#cameraMode').addEventListener('click',()=>{this.cameraMode=!this.cameraMode;$('#cameraMode').classList.toggle('active',this.cameraMode);$('#cameraMode').setAttribute('aria-pressed',String(this.cameraMode));this.updateLabels(true);});
   $('#resetCamera').addEventListener('click',()=>{this.scene.resetCamera();this.toast('전체가 보이는 처음 시점');});
   $('#prevBowl').addEventListener('click',()=>this.scene.focus(this.scene.focusIndex-1));$('#nextBowl').addEventListener('click',()=>this.scene.focus(this.scene.focusIndex+1));
@@ -1532,7 +1625,7 @@ class App{
   $('#motion').addEventListener('change',e=>{this.scene.reduced=e.target.checked;});
   $('#original').addEventListener('change',e=>{this.audio.original=e.target.checked;if(e.target.checked&&this.audio.ready)for(let i=0;i<5;i++)this.audio.voices[i].pan.pan.setTargetAtTime([.08,-.55,-.33,.55,.35][i],this.audio.ctx.currentTime,.1);this.updateLabels(true);});
   for(const b of document.querySelectorAll('[data-force]'))b.addEventListener('click',()=>{this.force=+b.dataset.force;this.syncControls();this.save();});
-  $('#resetValues').addEventListener('click',()=>{Object.assign(this.audio,{volume:1.45,cry:.78,waves:.92,room:.44,reference:.28,fracture:.08,harmony:true,original:false,uiSound:false});this.scene.tearAmount=1;this.scene.wrinkleAmount=1;this.scene.reduced=false;this.force=.78;this.syncControls();this.save();this.updateLabels(true);});
+  $('#resetValues').addEventListener('click',()=>{Object.assign(this.audio,{volume:1.45,cry:.78,waves:.92,room:.44,reference:.28,fracture:.08,harmony:true,original:false,uiSound:true});this.scene.tearAmount=1;this.scene.wrinkleAmount=1;this.scene.reduced=false;this.force=.78;this.syncControls();this.save();this.updateLabels(true);});
   $('#copyValues').addEventListener('click',async()=>{
    const a=this.audio,text=`CRYING BOWL v0.4.1 · volume ${a.volume} / cry ${a.cry} / waves ${a.waves} / room ${a.room} / reference ${a.reference} / fracture ${a.fracture} / tears ${this.scene.tearAmount} / wrinkles ${this.scene.wrinkleAmount}`;
    try{await navigator.clipboard.writeText(text);this.toast('설정값을 복사했어');}catch(_){const ta=document.createElement('textarea');ta.value=text;$('#settings').append(ta);ta.select();try{document.execCommand('copy');}catch(_){}setTimeout(()=>ta.remove(),5000);}
