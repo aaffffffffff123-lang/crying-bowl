@@ -27,6 +27,9 @@ const TUNE = {
   ting: { gain: .16, f: [2637.02, 2650.5] },   // 부딪치는 금속음 (UI 팅샤와 같은 음)
   sigh: {
     gain: .95,                 // 한숨 크기
+    toneGain: .035,            // 한숨 아래에 깔리는 낮고 둥근 오카리나 음
+    toneMidi: [57, 55, 52, 50, 48], // 짧은 들숨부터 A3·G3·E3·D3·C3
+    toneHolds: [.9, 1.5, 2.2, 3.4], // 길게 들이쉴수록 낮은 음
     inhaleGain: .15,           // 들숨 크기 (날숨보다 한참 작게: 실제 한숨도 들숨은 거의 안 들린다)
     f0: [112, 126],            // '하아' / '후우' 목소리 높이
     room: .20
@@ -507,10 +510,19 @@ class ExtraAudio {
     s.start(when); this.voices.push(v);
     return v;
   }
-  cleanup(v) { if (v.gone) return; v.gone = true; for (const n of [v.src, v.g, v.p, v.send]) if (n) try { n.disconnect(); } catch (_) {} this.voices = this.voices.filter(x => x !== v); }
+  cleanup(v) { if (v.gone) return; v.gone = true; for (const n of [v.src, v.g, v.p, v.send, v.filter]) if (n) try { n.disconnect(); } catch (_) {} this.voices = this.voices.filter(x => x !== v); }
   fade(v, sec = .05, at = this.c.currentTime) {
     if (v.gone || v.fading) return; v.fading = true;
-    const g = v.g.gain, t = Math.max(at, this.c.currentTime); g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(0, t + sec);
+    const g = v.g.gain, t = Math.max(at, this.c.currentTime);
+    if (v.kind === 'ocarinaTone') {
+      if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
+      else {
+        const x = clamp((t - v.start) / v.dur) * (v.toneCurve.length - 1), i = Math.floor(x), a = v.toneCurve;
+        const level = lerp(a[i], a[Math.min(a.length - 1, i + 1)], x - i);
+        g.cancelScheduledValues(0); g.setValueAtTime(level, this.c.currentTime); g.setValueAtTime(level, t);
+      }
+    } else { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); }
+    g.linearRampToValueAtTime(0, t + sec);
     try { v.src.stop(t + sec + .02); } catch (_) { this.cleanup(v); }
     v.cut = t + sec;
   }
@@ -543,7 +555,7 @@ class ExtraAudio {
   /* 오카리나: 들숨 시작 */
   breatheIn() {
     const c = this.c, now = c.currentTime;
-    for (const v of this.voices) if (v.kind === 'inhale' || v.kind === 'exhale') this.fade(v, .08);
+    for (const v of this.voices) if (v.kind === 'inhale' || v.kind === 'exhale' || v.kind === 'ocarinaTone') this.fade(v, .08);
     const b = this.breath = { in: now + .01, out: null, v: null, ex: null, held: 0 };
     if (this.inhaleBuf) b.v = this.play(this.inhaleBuf, { when: b.in, gain: TUNE.sigh.inhaleGain, kind: 'inhale', room: TUNE.sigh.room * .6 });
     return b;
@@ -558,9 +570,31 @@ class ExtraAudio {
     if (b.v) this.fade(b.v, .07, inEnd);
     const when = inEnd + .11;
     b.out = when; b.ex = this.play(item, { when, gain: TUNE.sigh.gain, kind: 'exhale', room: TUNE.sigh.room });
+    b.tone = this.playOcarina(when, item.dur, b.held, item.track);
     b.kind = pool === this.pools.hu ? 'hu' : 'ha';
     this.refill(this.pools.hu); this.refill(this.pools.ha); this.refill(this.pools.deep, 1);
     return b;
+  }
+  /* 들이쉰 시간으로 음을 고른다. 둥근 용기 공명의 기본음과 아주 옅은 배음만 한숨 밑에 깐다. */
+  playOcarina(when, dur, held, track) {
+    const c = this.c, S = TUNE.sigh;
+    let step = 0; while (step < S.toneHolds.length && held >= S.toneHolds[step]) step++;
+    const midi = S.toneMidi[step], f0 = 440 * Math.pow(2, (midi - 69) / 12);
+    this.ocarinaWave ||= c.createPeriodicWave(new Float32Array(5), new Float32Array([0, 1, .07, .02, .008]), { disableNormalization: true });
+    const src = c.createOscillator(), filter = c.createBiquadFilter(), g = c.createGain(), p = c.createStereoPanner(), send = c.createGain();
+    src.setPeriodicWave(this.ocarinaWave); filter.type = 'lowpass'; filter.frequency.value = 1100; filter.Q.value = .5;
+    src.frequency.setValueAtTime(f0, when); src.frequency.setValueAtTime(f0, when + dur * .55); src.frequency.linearRampToValueAtTime(f0 * .996, when + dur);
+    const curve = new Float32Array(Math.ceil(dur * 100) + 1);
+    for (let i = 0; i < curve.length; i++) {
+      const t = dur * i / (curve.length - 1), flow = clamp(sampleTrack(track, 'flow', t));
+      curve[i] = S.toneGain * flow * smooth(0, .16, t) * (1 - smooth(Math.max(.16, dur - .45), dur, t));
+    }
+    curve[0] = curve[curve.length - 1] = 0;
+    g.gain.value = 0; g.gain.setValueCurveAtTime(curve, when, dur); p.pan.value = 0; send.gain.value = .12;
+    src.connect(filter); filter.connect(g); g.connect(p); p.connect(this.out); p.connect(send); send.connect(this.wet);
+    const v = { kind: 'ocarinaTone', src, filter, g, p, send, start: when, end: when + dur, dur, gone: false, midi, f0, toneCurve: curve };
+    src.onended = () => this.cleanup(v); src.start(when); src.stop(when + dur + .01); this.voices.push(v);
+    return v;
   }
   breathState() {
     const b = this.breath; if (!b) return null;
@@ -1336,5 +1370,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '4.1.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '4.2.0', tune: TUNE, voice: VOICE };
 })();
