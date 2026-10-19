@@ -167,8 +167,8 @@ function voiceLib() {
   // 압축·포화·정규화 뒤에 감쇠해야 마지막 숨이 다시 커지지 않는다. 입과 떨림도 같은 곡선으로 잦아든다.
   function releaseScream(result, sr) {
     const { data, dur, track } = result;
-    const release = clamp(dur * .19, .7, 1.3), end = dur - .006, start = end - release;
-    const gainAt = t => Math.pow(1 - smooth(start, end, t), 1.25);
+    const release = clamp(dur * .35, 1.4, 3.8), end = dur - .006, start = end - release;
+    const gainAt = t => Math.pow(1 - smooth(start, end, t), .82);
     for (let i = Math.max(0, Math.floor(start * sr)); i < data.length; i++) data[i] *= gainAt(i / sr);
     for (const key of ['open', 'round', 'shiver']) {
       const values = track[key]; if (!values) continue;
@@ -1484,5 +1484,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '4.7.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '4.8.0', tune: TUNE, voice: VOICE };
 })();
