@@ -19,8 +19,8 @@ const TUNE = {
   scream: {
     f0: [1260, 1340],          // 왼쪽·오른쪽 띵샤의 비명 높이(Hz). 반음쯤 어긋나서 둘이 같이 지르면 더 찢어진다
     gain: .65,                 // 비명 크기. 갈라짐은 성대 합성에서 만들고 전체 음량은 조금만 올린다
-    dur: [2.0, 2.8, 3.7],      // 단계별 길이(초): 한 번 / 연달아 / 계속 몰아칠 때 (기존의 2배)
-    level: [.50, .78, 1],      // 단계별 거칠기(0~1). 높을수록 목이 찢어지고 갈라진다
+    dur: [2.0, 2.0, 2.8, 3.7], // 약한 비명 → 현재 기본 → 강한 비명 → 최대 절규
+    level: [.08, .50, .78, 1],  // 첫 단계는 이전의 약한 비명, 이후 세 단계는 강화된 비명
     chain: 4.8,                // 늘어난 비명을 듣고 다시 쳐도 이어지도록 연속 판정 간격도 2배
     room: .16                  // 잔향으로 보내는 양
   },
@@ -160,8 +160,106 @@ function voiceLib() {
   const FORM = 5;
   function mixF(out, a, b, t) { for (let i = 0; i < a.length; i++) out[i] = a[i] + (b[i] - a[i]) * t; return out; }
 
-  /* 비명: ㄲ 파열 → ㅑ에서 ㅏ로 미끄러짐 → 아아아(거칠게 갈라짐, 가끔 목소리가 뒤집힘) → 앙(코울림) → 악(목이 닫히며 뚝) */
+  /* 비명: ㄲ 파열 → ㅑ에서 ㅏ로 미끄러짐 → 아아아(거칠게 갈라짐, 가끔 목소리가 뒤집힘) → 앙(코울림) → 남은 숨과 함께 천천히 잦아듦 */
+  // 압축·포화·정규화 뒤에 감쇠해야 마지막 숨이 다시 커지지 않는다. 입과 떨림도 같은 곡선으로 잦아든다.
+  function releaseScream(result, sr) {
+    const { data, dur, track } = result;
+    const release = clamp(dur * .19, .35, .65), end = dur - .006, start = end - release;
+    const gainAt = t => Math.pow(1 - smooth(start, end, t), 1.25);
+    for (let i = Math.max(0, Math.floor(start * sr)); i < data.length; i++) data[i] *= gainAt(i / sr);
+    for (const key of ['open', 'round', 'shiver']) {
+      const values = track[key]; if (!values) continue;
+      for (let k = Math.max(0, Math.floor(start * track.rate)); k < values.length; k++) values[k] *= gainAt(k / track.rate);
+    }
+    track.amp = rmsTrack(data, sr);
+    return result;
+  }
+
+  function legacyScream(o) {
+    const sr = o.sr, os = o.os || Math.max(1, Math.round(96000 / sr)), R = sr * os, T = 1 / R;
+    const L = clamp(o.level ?? 0), dur = o.dur, r = rng(o.seed || 1);
+    const N = Math.ceil((dur + .03) * R), y = new Float32Array(N);
+    const t0 = .016 + r() * .006, tG = .085, tN = dur * (.66 + .06 * r()), tE = dur - (.045 + .015 * r()), tEnd = dur - .006;
+    const J = [430, 2700, 3400, 4150, 5000], JB = [90, 160, 240, 300, 380];
+    const A = [1180, 1950, 3080, 4150, 5150], AB = [300, 240, 260, 280, 360];
+    const NA = [880, 1650, 2850, 3900, 4900], NB = [300, 260, 320, 380, 470];
+    const K = [380, 2050, 2280, 3600, 4500], KB = [140, 160, 220, 320, 420];
+    const F = new Float64Array(FORM), B = new Float64Array(FORM), tmpF = new Float64Array(FORM), tmpB = new Float64Array(FORM);
+    const res = Array.from({ length: FORM }, () => new Reson()), nasal = new Reson(), burstR = new Reson(), burstR2 = new Reson();
+    burstR.set(2950, 700, T); burstR2.set(4300, 1200, T);
+    const drift = walk(r, 3.2), drift2 = walk(r, 9), ampWalk = walk(r, 4), formWalk = walk(r, 6), roughWalk = walk(r, 2.4), chaosWalk = walk(r, 5);
+    const cracks = [], nCrack = (r() < .35 + .55 * L ? 1 : 0) + (r() < .35 * L ? 1 : 0);
+    for (let k = 0; k < nCrack; k++) cracks.push({ at: lerp(t0 + .22, tN - .05, r()), len: .05 + .05 * r(), ratio: r() < .6 ? 1.335 : 1.5 });
+    const sdBase = .26 + .30 * L, pdBase = .022 + .032 * L, rdBase = .18 + .24 * L, aspBase = .11 + .11 * L;
+    const f0 = o.f0, tremHz = 5.8 + 1.4 * r(), tremPh = r() * TAU, archUp = .05 + .05 * r() + .03 * L, archDown = .02 + .05 * r();
+    let phase = 0, parity = 0, cycAmp = 1, cycStretch = 1, jit = 1, noiseS = (o.seed * 7919) >>> 0 || 7, roughPh = r() * TAU, roughHz = 78;
+    const nt = Math.ceil(dur * 100) + 2, track = { rate: 100, open: new Float32Array(nt), round: new Float32Array(nt), squeeze: new Float32Array(nt), shiver: new Float32Array(nt) };
+    const step = Math.round(R / 100);
+    for (let n = 0; n < N; n++) {
+      const t = n * T;
+      if ((n & 7) === 0) {
+        const a = smooth(t0, t0 + tG, t), na = smooth(tN, tN + .14, t), kk = 0;
+        mixF(tmpF, J, A, a); mixF(tmpB, JB, AB, a);
+        for (let i = 0; i < FORM; i++) { tmpF[i] += (NA[i] - tmpF[i]) * na * .85; tmpB[i] += (NB[i] - tmpB[i]) * na * .85; tmpF[i] += (K[i] - tmpF[i]) * kk; tmpB[i] += (KB[i] - tmpB[i]) * kk; }
+        const fw = 1 + .025 * formWalk(8 * T);
+        for (let i = 0; i < FORM; i++) { F[i] = tmpF[i] * (i ? fw : 1); B[i] = tmpB[i]; }
+        if (t > t0 + tG * .6 && kk < .5) F[0] = Math.max(F[0], Math.min(1700, 1.16 * f0 * (1 + .04 * L)));
+        for (let i = 0; i < FORM; i++) res[i].set(Math.min(F[i], R * .45), B[i], T);
+        nasal.set(290, 110, T);
+      }
+      let c = t < t0 ? .74 : lerp(.74, 1.0, 1 - Math.pow(1 - smooth(t0, t0 + .12, t), 1.5));
+      c *= 1 + archUp * smooth(t0 + .06, t0 + .30, t) - (archUp + archDown) * smooth(t0 + .30, tN + .05, t);
+      const na = smooth(tN, tN + .14, t);
+      c *= 1 - .035 * na * Math.sin(Math.PI * clamp((t - tN) / Math.max(.05, tE - tN)));
+      // 끝에서 목을 다시 조이지 않고, 남은 숨을 천천히 놓는다.
+      let crack = 1; for (const k of cracks) { const w = smooth(k.at, k.at + .007, t) * (1 - smooth(k.at + k.len, k.at + k.len + .009, t)); crack *= 1 + (k.ratio - 1) * w; }
+      const fNow = f0 * c * crack * (1 + .042 * drift(T) + .008 * drift2(T)) * (1 + (.007 + .012 * L) * Math.sin(TAU * tremHz * t + tremPh));
+      phase += fNow * T / (cycStretch * jit);
+      if (phase >= 1) {
+        phase -= 1; parity ^= 1;
+        const chaos = clamp(.5 + .5 * chaosWalk(1 / fNow)) * L;
+        const sd = sdBase * (.55 + .45 * Math.abs(roughWalk(1 / fNow))) * (crack > 1.05 ? .35 : 1), pd = pdBase * (crack > 1.05 ? .3 : 1);
+        cycAmp = (parity ? 1 - sd : 1) * (.9 + .2 * r()) * (1 - chaos * .35 * r());
+        cycStretch = parity ? 1 + pd : 1 - pd;
+        jit = 1 + (r() * 2 - 1) * (.018 + .024 * L + chaos * .06);
+      }
+      const tp = .34, tn = .085, ta = .004 + .006 * (1 - L);
+      const e = glottis(phase, tp, tn, ta) * cycAmp;
+      noiseS ^= noiseS << 13; noiseS ^= noiseS >>> 17; noiseS ^= noiseS << 5;
+      const wn = ((noiseS >>> 0) / 4294967296) * 2 - 1;
+      const asp = wn * aspBase * (.35 + .65 * flow(phase, tp, tn)) * 2.2;
+      roughHz += ((70 + 30 * (.5 + .5 * roughWalk(0))) - roughHz) * 4 * T;
+      roughPh += TAU * roughHz * T;
+      const rough = 1 - rdBase * (.5 + .5 * Math.sin(roughPh + 1.7 * Math.sin(roughPh * .37)));
+      const env = smooth(t0, t0 + .022, t) * (1 + .07 * ampWalk(T)) * (1 + (.05 + .06 * L) * Math.sin(TAU * tremHz * t + tremPh + 1.1)) * rough * (1 - .16 * na * (1 - smooth(tE - .03, tE, t))) * (1 + .12 * smooth(tE - .05, tE, t));
+      const x = (e + asp) * env;
+      let v = x; for (let i = 0; i < FORM; i++) v = res[i].run(v);
+      v += nasal.run(x) * .55 * na * (1 - smooth(tE - .01, tE + .01, t));
+      if (t < t0 + .004) { const be = Math.exp(-Math.max(0, t - .003) / .0035) * smooth(0, .0015, t); v += (burstR.run(wn) * 1.1 + burstR2.run(wn) * .6) * be * 6; }
+      const gate = 1;
+      y[n] = v * gate;
+      if (n % step === 0) {
+        const ti = Math.round(t * 100);
+        if (ti < nt) {
+          track.open[ti] = t < t0 ? 0 : smooth(t0 - .004, t0 + .06, t) * (1 - .30 * na) * (1 - smooth(tE - .005, tEnd - .004, t) * .9);
+          track.round[ti] = na * (1 - smooth(tE, tEnd, t));
+          track.squeeze[ti] = smooth(t0 + .02, t0 + .13, t);
+          track.shiver[ti] = env * (rdBase + sdBase) * smooth(t0, t0 + .05, t) * gate;
+        }
+      }
+    }
+    dcBlock(y, 70, R); shelf(y, 2300, 5, R); peakNormalize(y, 1);
+    const drive = 1.5 + 1.9 * L, td = Math.tanh(drive);
+    for (let i = 0; i < y.length; i++) { const v = y[i]; y[i] = Math.tanh(drive * v + .08 * v * v) / td; }
+    const data = decimate(y, os); dcBlock(data, 60, sr); peakNormalize(data, .95);
+    const tailN = 75, sq = new Float32Array(nt + tailN); sq.set(track.squeeze);
+    const lastIdx = Math.min(nt - 1, Math.round(tEnd * 100)); for (let k = lastIdx; k < nt + tailN; k++) sq[k] = Math.pow(Math.max(0, 1 - (k - lastIdx) / tailN), 1.5);
+    track.squeeze = sq; track.amp = rmsTrack(data, sr);
+    return releaseScream({ data, dur, track }, sr);
+  }
+
   function scream(o) {
+    if (o.gentle) return legacyScream(o);
     const sr = o.sr, os = o.os || Math.max(1, Math.round(96000 / sr)), R = sr * os, T = 1 / R;
     const L = clamp(o.level ?? 0), dur = o.dur, r = rng(o.seed || 1);
     const N = Math.ceil((dur + .03) * R), y = new Float32Array(N);
@@ -185,7 +283,7 @@ function voiceLib() {
     for (let n = 0; n < N; n++) {
       const t = n * T;
       if ((n & 7) === 0) {
-        const a = smooth(t0, t0 + tG, t), na = smooth(tN, tN + .14, t), kk = smooth(tE, tEnd - .004, t);
+        const a = smooth(t0, t0 + tG, t), na = smooth(tN, tN + .14, t), kk = 0;
         mixF(tmpF, J, A, a); mixF(tmpB, JB, AB, a);
         for (let i = 0; i < FORM; i++) { tmpF[i] += (NA[i] - tmpF[i]) * na * .85; tmpB[i] += (NB[i] - tmpB[i]) * na * .85; tmpF[i] += (K[i] - tmpF[i]) * kk; tmpB[i] += (KB[i] - tmpB[i]) * kk; }
         const fw = 1 + .025 * formWalk(8 * T);
@@ -198,7 +296,7 @@ function voiceLib() {
       c *= 1 + archUp * smooth(t0 + .06, t0 + .30, t) - (archUp + archDown) * smooth(t0 + .30, tN + .05, t);
       const na = smooth(tN, tN + .14, t);
       c *= 1 - .035 * na * Math.sin(Math.PI * clamp((t - tN) / Math.max(.05, tE - tN)));
-      c *= 1 + .06 * smooth(tE - .02, tEnd, t);
+      // 끝에서 목을 다시 조이지 않고, 남은 숨을 천천히 놓는다.
       let crack = 1, breakAmt = 0; for (const k of cracks) { const w = smooth(k.at, k.at + .007, t) * (1 - smooth(k.at + k.len, k.at + k.len + .009, t)); crack *= 1 + (k.ratio - 1) * w; breakAmt = Math.max(breakAmt, w); }
       const fNow = f0 * c * crack * (1 + .042 * drift(T) + .008 * drift2(T)) * (1 + (.007 + .012 * L) * Math.sin(TAU * tremHz * t + tremPh));
       phase += fNow * T / (cycStretch * jit);
@@ -224,7 +322,7 @@ function voiceLib() {
       let v = x; for (let i = 0; i < FORM; i++) v = res[i].run(v);
       v += nasal.run(x) * .55 * na * (1 - smooth(tE - .01, tE + .01, t));
       if (t < t0 + .004) { const be = Math.exp(-Math.max(0, t - .003) / .0035) * smooth(0, .0015, t); v += (burstR.run(wn) * 1.1 + burstR2.run(wn) * .6) * be * 6; }
-      const gate = 1 - smooth(tEnd - .022, tEnd, t);
+      const gate = 1;
       y[n] = v * gate;
       if (n % step === 0) {
         const ti = Math.round(t * 100);
@@ -243,7 +341,7 @@ function voiceLib() {
     const tailN = 75, sq = new Float32Array(nt + tailN); sq.set(track.squeeze);
     const lastIdx = Math.min(nt - 1, Math.round(tEnd * 100)); for (let k = lastIdx; k < nt + tailN; k++) sq[k] = Math.pow(Math.max(0, 1 - (k - lastIdx) / tailN), 1.5);
     track.squeeze = sq; track.amp = rmsTrack(data, sr);
-    return { data, dur, track };
+    return releaseScream({ data, dur, track }, sr);
   }
 
   /* 들숨: 0.2초에 걸쳐 부풀었다가 천천히 잦아드는 숨. 가슴이 차면(full초) 숨을 멈춘다 */
@@ -347,7 +445,7 @@ class ExtraAudio {
     this.voices = []; this.recent = []; this.jobs = new Map(); this.jobId = 0; this.seed = (Date.now() % 100000) + 17;
     const pool = make => ({ items: [], pending: 0, make });
     this.pools = {
-      scream: [0, 1, 2].map(lv => [0, 1].map(side => pool(() => ({ fn: 'scream', o: { f0: TUNE.scream.f0[side] * (1 + .04 * lv) * (.97 + .06 * Math.random()), level: TUNE.scream.level[lv] + .06 * (Math.random() - .5), dur: TUNE.scream.dur[lv] * (.92 + .16 * Math.random()) } })))),
+      scream: TUNE.scream.level.map((_, lv) => [0, 1].map(side => pool(() => ({ fn: 'scream', o: { f0: TUNE.scream.f0[side] * (1 + .04 * Math.max(0, lv - 1)) * (.97 + .06 * Math.random()), level: TUNE.scream.level[lv] + .06 * (Math.random() - .5), dur: TUNE.scream.dur[lv] * (.92 + .16 * Math.random()), gentle: lv === 0 } })))),
       hu: pool(() => ({ fn: 'exhale', o: { kind: 'hu', depth: .30 + .1 * Math.random(), f0: TUNE.sigh.f0[1] } })),
       ha: pool(() => ({ fn: 'exhale', o: { kind: 'ha', depth: .62 + .1 * Math.random(), f0: TUNE.sigh.f0[0], timeScale: 1 + (TUNE.breath.exhaleScale - 1) * .4 } })),
       deep: pool(() => ({ fn: 'exhale', o: { kind: 'ha', depth: .92 + .08 * Math.random(), f0: TUNE.sigh.f0[0] * .97, timeScale: TUNE.breath.exhaleScale } }))
@@ -395,7 +493,7 @@ class ExtraAudio {
     }
     clearTimeout(this.warmMore);
     this.warmMore = setTimeout(() => {
-      if (mode !== 'ocarina') { for (const lv of [0, 1, 2]) for (const side of [0, 1]) this.refill(T.scream[lv][side], lv === 2 ? 1 : 2); }
+      if (mode !== 'ocarina') { for (let lv = 0; lv < TUNE.scream.level.length; lv++) for (const side of [0, 1]) this.refill(T.scream[lv][side], lv === TUNE.scream.level.length - 1 ? 1 : 2); }
       if (mode !== 'tingsha') { this.refill(T.hu); this.refill(T.ha); this.refill(T.deep, 1); }
     }, mode === 'all' ? 2500 : 300);
   }
@@ -421,15 +519,15 @@ class ExtraAudio {
   /* 띵샤를 부딪친다: 두 장이 각자 비명, 그리고 금속 울림 */
   strike(lv, delay) {
     const c = this.c, when = c.currentTime + delay, out = [];
-    for (const v of this.voices) if (v.kind === 'scream') this.fade(v, .035, when);
+    for (const v of this.voices) if (v.kind === 'scream') this.fade(v, .12, when);
     for (const side of [0, 1]) {
       const item = this.takeNow(this.pools.scream[lv][side]);
-      const v = this.play(item, { when: when + side * .014, gain: TUNE.scream.gain * (side ? .92 : 1), pan: side ? .34 : -.34, room: TUNE.scream.room, kind: 'scream', side });
+      const v = this.play(item, { when: when + side * .014, gain: (lv === 0 ? .62 : TUNE.scream.gain) * (side ? .92 : 1), pan: side ? .34 : -.34, room: TUNE.scream.room, kind: 'scream', side });
       v.lv = lv;
       this.recent.push(v); out.push(v);
-      this.refill(this.pools.scream[lv][side], lv === 2 ? 1 : 2);
+      this.refill(this.pools.scream[lv][side], lv === TUNE.scream.level.length - 1 ? 1 : 2);
     }
-    for (const side of [0, 1]) if (this.tingBuf[side]) this.play(this.tingBuf[side], { when, gain: TUNE.ting.gain * (.8 + .2 * lv), pan: side ? .42 : -.42, dest: this.ringBus, kind: 'ting', side });
+    for (const side of [0, 1]) if (this.tingBuf[side]) this.play(this.tingBuf[side], { when, gain: TUNE.ting.gain * (.8 + .2 * Math.max(0, lv - 1)), pan: side ? .42 : -.42, dest: this.ringBus, kind: 'ting', side });
     this.recent = this.recent.filter(v => c.currentTime < v.start + v.dur + 1.2);
     return out;
   }
@@ -936,14 +1034,14 @@ class ExtraVisuals {
       if (age < .06) { const k = age / .06; x = lerp(rest, contact, k * k); roll = -.10 * k; }
       else if (age < 3) { const a = age - .06; x = rest - (rest - contact) * Math.exp(-a * 6.5) * Math.cos(a * 15); roll = .16 * Math.exp(-a * 4.2) * Math.sin(a * 17 + 1.2); }
       const shiver = st ? st.shiver : 0, scream = st ? st.amp : 0;
-      const tremble = reduced * (.016 * shiver + .006 * scream) * (1 + .3 * (st ? st.lv : 0));   // 악을 쓰며 부들부들 떤다. 연달아 칠수록 더
+      const tremble = reduced * (.016 * shiver + .006 * scream) * (st && st.lv === 0 ? .72 : 1 + .3 * (st ? Math.max(0, st.lv - 1) : 0));   // 악을 쓰며 부들부들 떤다. 연달아 칠수록 더
       const sway = .012 * Math.sin(t * 1.3 + b.side) * reduced;
       const pos = [b.side * x + tremble * Math.sin(t * 61 + b.side * 2), 1.50 + tremble * .8 * Math.sin(t * 73 + 1), 0];
       b.matrix = M.model(pos, 1, [.92 + sway + tremble * 2 * Math.sin(t * 57), -b.side * .13, b.side * (.10 + roll * reduced) + tremble * Math.sin(t * 67)]);
       /* 표정: 비명 트랙을 그대로 따른다. 입은 비명 소리대로 벌어지고, 분노는 치는 순간 치솟았다가 소리가 끝난 뒤 천천히 가라앉는다.
-       * 연달아 칠수록(lv 0→2) 중간 분노에서 최대 절규까지 일그러진다. 쉬면 무표정 */
+       * 연달아 칠수록(lv 0→3) 약한 비명부터 중간 분노, 최대 절규까지 일그러진다. 쉬면 무표정 */
       const P = this.lastPose[b.side < 0 ? 0 : 1];
-      const want = st ? { open: Math.min(1, st.open * 1.02 * (1 - .18 * st.round)), expression: Math.min(1, st.squeeze), blink: Math.min(1, st.squeeze * (.10 + .45 * (st.lv || 0)) * Math.min(1, st.open * 1.35)) } : { open: 0, expression: 0, blink: 0 };
+      const want = st ? { open: Math.min(1, st.open * (st.lv === 0 ? .68 : 1.02) * (1 - .18 * st.round)), expression: Math.min(1, st.squeeze * (st.lv === 0 ? .42 : 1)), blink: st.lv === 0 ? 0 : Math.min(1, st.squeeze * (.10 + .45 * (st.lv - 1)) * Math.min(1, st.open * 1.35)) } : { open: 0, expression: 0, blink: 0 };
       const k = 1 - Math.exp(-dt * 26), kr = 1 - Math.exp(-dt * 9);
       P.open = lerp(P.open, want.open, want.open > P.open ? k : kr); P.expression = lerp(P.expression, want.expression, want.expression > P.expression ? k : kr * .8); P.blink = lerp(P.blink, want.blink, want.blink > P.blink ? k : kr * .8);
       for (const p of b.parts) { p.model = p.local ? M.mul(b.matrix, p.local) : b.matrix; if (p.face) { p.open = P.open; p.expression = P.expression; p.blink = P.blink; } p.seed = b.side > 0 ? 3.1 : 1.3; p.energy = 0; }
@@ -1201,7 +1299,7 @@ class ExtraController {
     if (this.mode !== mode) return;
     if (mode === 'tingsha') {
       const now = this.app.audio.ctx.currentTime; if (now - this.lastStrike < .16) return;
-      this.level = now - this.lastStrike < TUNE.scream.chain ? Math.min(2, this.level + 1) : 0;
+      this.level = now - this.lastStrike < TUNE.scream.chain ? Math.min(TUNE.scream.level.length - 1, this.level + 1) : 0;
       this.lastStrike = now;
       const delay = .06; this.sound.strike(this.level, delay); this.visual.strike(this.app.time + this.app.audio.lag());
       return;
@@ -1238,5 +1336,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '4.0.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '4.1.0', tune: TUNE, voice: VOICE };
 })();
