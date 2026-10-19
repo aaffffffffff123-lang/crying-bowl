@@ -19,16 +19,16 @@ const TUNE = {
   scream: {
     f0: [1260, 1340],          // 왼쪽·오른쪽 띵샤의 비명 높이(Hz). 반음쯤 어긋나서 둘이 같이 지르면 더 찢어진다
     gain: .65,                 // 비명 크기. 갈라짐은 성대 합성에서 만들고 전체 음량은 조금만 올린다
-    dur: [2.0, 2.0, 2.8, 3.7], // 약한 비명 → 현재 기본 → 강한 비명 → 최대 절규
-    level: [.08, .50, .78, 1],  // 첫 단계는 이전의 약한 비명, 이후 세 단계는 강화된 비명
-    chain: 4.8,                // 늘어난 비명을 듣고 다시 쳐도 이어지도록 연속 판정 간격도 2배
+    dur: [4, 4, 4, 4, 4.6, 5.1, 5.6, 6.5, 7.4, 8.4, 9.6, 10.8],
+    level: [.08, .22, .36, .50, .60, .69, .78, .89, 1, 1.16, 1.33, 1.50], // 기존 4단계를 세분화하고, 최대 절규 위에 세 단계
+    chain: 12,                 // 긴 비명을 듣고 다시 쳐도 이어진다
     room: .16                  // 잔향으로 보내는 양
   },
   ting: { gain: .16, f: [2637.02, 2650.5] },   // 부딪치는 금속음 (UI 팅샤와 같은 음)
   sigh: {
     gain: .95,                 // 한숨 크기
-    toneGain: .14,             // 낮은 오카리나 음: 한숨 밑에서도 들리도록 기존의 4배
-    toneMidi: [57, 55, 52, 50, 48], // 짧은 들숨부터 A3·G3·E3·D3·C3
+    toneGain: .27,             // 한숨 밑의 오카리나 음을 휴대폰에서도 구분할 수 있게
+    toneMidi: [69, 67, 64, 62, 60], // 짧은 들숨부터 A4·G4·E4·D4·C4: 한 옥타브 위
     toneHolds: [.9, 1.5, 2.2, 3.4], // 길게 들이쉴수록 낮은 음
     inhaleGain: .15,           // 들숨 크기 (날숨보다 한참 작게: 실제 한숨도 들숨은 거의 안 들린다)
     f0: [112, 126],            // '하아' / '후우' 목소리 높이
@@ -167,7 +167,7 @@ function voiceLib() {
   // 압축·포화·정규화 뒤에 감쇠해야 마지막 숨이 다시 커지지 않는다. 입과 떨림도 같은 곡선으로 잦아든다.
   function releaseScream(result, sr) {
     const { data, dur, track } = result;
-    const release = clamp(dur * .19, .35, .65), end = dur - .006, start = end - release;
+    const release = clamp(dur * .19, .7, 1.3), end = dur - .006, start = end - release;
     const gainAt = t => Math.pow(1 - smooth(start, end, t), 1.25);
     for (let i = Math.max(0, Math.floor(start * sr)); i < data.length; i++) data[i] *= gainAt(i / sr);
     for (const key of ['open', 'round', 'shiver']) {
@@ -264,7 +264,7 @@ function voiceLib() {
   function scream(o) {
     if (o.gentle) return legacyScream(o);
     const sr = o.sr, os = o.os || Math.max(1, Math.round(96000 / sr)), R = sr * os, T = 1 / R;
-    const L = clamp(o.level ?? 0), dur = o.dur, r = rng(o.seed || 1);
+    const L = clamp(o.level ?? 0), strain = clamp(((o.level ?? 0) - 1) / .5), dur = o.dur, r = rng(o.seed || 1);
     const N = Math.ceil((dur + .03) * R), y = new Float32Array(N);
     const t0 = .016 + r() * .006, tG = .085, tN = dur * (.66 + .06 * r()), tE = dur - (.045 + .015 * r()), tEnd = dur - .006;
     const J = [430, 2700, 3400, 4150, 5000], JB = [90, 160, 240, 300, 380];
@@ -276,10 +276,10 @@ function voiceLib() {
     burstR.set(2950, 700, T); burstR2.set(4300, 1200, T);
     const drift = walk(r, 3.2), drift2 = walk(r, 9), ampWalk = walk(r, 4), formWalk = walk(r, 6), roughWalk = walk(r, 2.4), chaosWalk = walk(r, 5);
     // 긴 '아아아' 구간 내내 압력이 버티다가 꺾인다. 배음뿐 아니라 성대 주기 자체가 갈라져야 악쓰는 소리다.
-    const cracks = [], nCrack = Math.max(1, Math.round((dur - .22) * (.8 + 1.3 * L)));
-    for (let k = 0; k < nCrack; k++) cracks.push({ at: lerp(t0 + .18, tN - .13, (k + .2 + .6 * r()) / nCrack), len: .045 + .065 * r() + .035 * L, ratio: r() < .32 + .22 * L ? .665 : (r() < .65 ? 1.335 : 1.5) });
-    const sdBase = .42 + .36 * L, pdBase = .035 + .060 * L, rdBase = .25 + .35 * L, aspBase = .15 + .15 * L;
-    const f0 = o.f0, tremHz = 5.8 + 1.4 * r(), tremPh = r() * TAU, archUp = .05 + .05 * r() + .03 * L, archDown = .02 + .05 * r();
+    const cracks = [], nCrack = Math.max(1, Math.round((dur - .22) * (.8 + 1.3 * L + 1.8 * strain)));
+    for (let k = 0; k < nCrack; k++) cracks.push({ at: lerp(t0 + .18, tN - .13, (k + .2 + .6 * r()) / nCrack), len: .045 + .065 * r() + .035 * L + .025 * strain, ratio: r() < .32 + .22 * L ? .665 - .10 * strain : (r() < .65 ? 1.335 + .12 * strain : 1.5 + .18 * strain) });
+    const sdBase = .42 + .36 * L + .12 * strain, pdBase = .035 + .060 * L + .045 * strain, rdBase = .25 + .35 * L + .18 * strain, aspBase = .15 + .15 * L + .14 * strain;
+    const f0 = o.f0, tremHz = 5.8 + 1.4 * r() + 1.8 * strain, tremPh = r() * TAU, archUp = .05 + .05 * r() + .03 * L, archDown = .02 + .05 * r();
     let phase = 0, subPhase = 0, cycle = 0, parity = 0, cycAmp = 1, cycStretch = 1, jit = 1, noiseS = (o.seed * 7919) >>> 0 || 7, roughPh = r() * TAU, roughHz = 78;
     const nt = Math.ceil(dur * 100) + 2, track = { rate: 100, open: new Float32Array(nt), round: new Float32Array(nt), squeeze: new Float32Array(nt), shiver: new Float32Array(nt) };
     const step = Math.round(R / 100);
@@ -310,10 +310,10 @@ function voiceLib() {
         const sd = sdBase * (.65 + .35 * Math.abs(roughWalk(1 / fNow))) * (crack > 1.05 ? .6 : 1), pd = pdBase * (crack > 1.05 ? .6 : 1);
         cycAmp = (parity ? 1 - sd : 1) * (.86 + .28 * r()) * (1 - chaos * .50 * r()) * (cycle % 3 === 0 ? 1 - .24 * L : 1);
         cycStretch = parity ? 1 + pd : 1 - pd;
-        jit = 1 + (r() * 2 - 1) * (.025 + .058 * L + chaos * .075);
+        jit = 1 + (r() * 2 - 1) * (.025 + .058 * L + chaos * .075 + .035 * strain);
       }
       const tp = .34, tn = .078 - .023 * L, ta = .003 + .005 * (1 - L);
-      const e = glottis(phase, tp, tn, ta) * cycAmp + glottis(subPhase, .40, .13, .018) * (.17 + .30 * L) * (1 - breakAmt * .45);
+      const e = glottis(phase, tp, tn, ta) * cycAmp + glottis(subPhase, .40, .13, .018) * (.17 + .30 * L + .22 * strain) * (1 - breakAmt * .45);
       noiseS ^= noiseS << 13; noiseS ^= noiseS >>> 17; noiseS ^= noiseS << 5;
       const wn = ((noiseS >>> 0) / 4294967296) * 2 - 1;
       const asp = wn * aspBase * (.35 + .65 * flow(phase, tp, tn)) * 2.2;
@@ -338,7 +338,7 @@ function voiceLib() {
       }
     }
     dcBlock(y, 70, R); shelf(y, 2300, 5, R); peakNormalize(y, 1);
-    const drive = 2.6 + 3.8 * L, td = Math.tanh(drive);
+    const drive = 2.6 + 3.8 * L + 2.6 * strain, td = Math.tanh(drive);
     for (let i = 0; i < y.length; i++) { const v = y[i]; y[i] = Math.tanh(drive * v + (.10 + .16 * L) * v * v) / td; }
     const data = decimate(y, os); dcBlock(data, 60, sr); peakNormalize(data, .95);
     const tailN = 75, sq = new Float32Array(nt + tailN); sq.set(track.squeeze);
@@ -448,7 +448,7 @@ class ExtraAudio {
     this.voices = []; this.recent = []; this.jobs = new Map(); this.jobId = 0; this.seed = (Date.now() % 100000) + 17;
     const pool = make => ({ items: [], pending: 0, next: 0, make });
     this.pools = {
-      scream: TUNE.scream.level.map((_, lv) => [0, 1].map(side => pool(() => ({ fn: 'scream', o: { f0: TUNE.scream.f0[side] * (1 + .04 * Math.max(0, lv - 1)) * (.97 + .06 * Math.random()), level: TUNE.scream.level[lv] + .06 * (Math.random() - .5), dur: TUNE.scream.dur[lv] * (.92 + .16 * Math.random()), gentle: lv === 0 } })))),
+      scream: TUNE.scream.level.map((intensity, lv) => [0, 1].map(side => pool(() => ({ fn: 'scream', o: { f0: TUNE.scream.f0[side] * (1 + .08 * clamp(intensity) + .20 * Math.max(0, intensity - 1)) * (.97 + .06 * Math.random()), level: intensity, stage: lv, dur: TUNE.scream.dur[lv] * (.96 + .08 * Math.random()), gentle: lv === 0 } })))),
       hu: pool(() => ({ fn: 'exhale', o: { kind: 'hu', depth: .30 + .1 * Math.random(), f0: TUNE.sigh.f0[1] } })),
       ha: pool(() => ({ fn: 'exhale', o: { kind: 'ha', depth: .62 + .1 * Math.random(), f0: TUNE.sigh.f0[0], timeScale: 1 + (TUNE.breath.exhaleScale - 1) * .4 } })),
       deep: pool(() => ({ fn: 'exhale', o: { kind: 'ha', depth: .92 + .08 * Math.random(), f0: TUNE.sigh.f0[0] * .97, timeScale: TUNE.breath.exhaleScale } }))
@@ -480,18 +480,18 @@ class ExtraAudio {
         const run = () => {
           /* Worker를 쓸 수 없는 환경에서도 연주 도중 무거운 비명 합성을 끼워 넣지 않는다. */
           if ((fn === 'scream' || fn === 'ting') && this.voices.some(v => !v.gone)) { setTimeout(run, 250); return; }
-          resolve(this.wrap(VOICE[fn](o)));
+          const item = this.wrap(VOICE[fn](o)); item.stage = o.stage; resolve(item);
         };
         setTimeout(run, 0);
       };
       if (!this.worker) return local();
       const id = ++this.jobId;
-      this.jobs.set(id, { done: m => resolve(this.wrap(m)), fail: local, retry: local });
+      this.jobs.set(id, { done: m => { const item = this.wrap(m); item.stage = o.stage; resolve(item); }, fail: local, retry: local });
       this.worker.postMessage({ id, fn, o });
     });
   }
   refill(p, size = 2) {
-    if (p.reusable && !this.worker) size = 1;
+    if (p.reusable) size = 1; // 긴 비명도 좌우·단계별 한 버퍼만 재사용한다
     while (p.items.length + p.pending < size) {
       p.pending++; const job = p.make();
       const ready = this.gen(job.fn, job.o).then(x => { p.pending--; p.items.push(x); });
@@ -522,14 +522,15 @@ class ExtraAudio {
       return Promise.all([this.tingWait, ...levels.flat().map(p => p.ready)]);
     }
   }
-  play(item, { when, gain = 1, pan = 0, dest = this.out, room = 0, kind, side = 0 }) {
+  play(item, { when, gain = 1, pan = 0, dest = this.out, room = 0, kind, side = 0, offset = 0, attack = 0 }) {
     const c = this.c, s = c.createBufferSource(), g = c.createGain(), p = c.createStereoPanner();
     s.buffer = item.buffer; g.gain.value = gain; p.pan.value = pan;
+    if (attack > 0) { g.gain.setValueAtTime(0, when); g.gain.linearRampToValueAtTime(gain, when + attack); }
     s.connect(g); g.connect(p); p.connect(dest);
     let send = null; if (room > 0) { send = c.createGain(); send.gain.value = room; p.connect(send); send.connect(this.wet); }
-    const v = { kind, side, src: s, g, p, send, start: when, end: when + item.buffer.duration, track: item.track, dur: item.dur, gone: false };
+    const v = { kind, side, src: s, g, p, send, start: when, end: when + item.buffer.duration - offset, offset, track: item.track, dur: item.dur, gone: false };
     s.onended = () => this.cleanup(v);
-    s.start(when); this.voices.push(v);
+    s.start(when, offset); this.voices.push(v);
     return v;
   }
   cleanup(v) { if (v.gone) return; v.gone = true; for (const n of [v.src, v.g, v.p, v.send, v.filter]) if (n) try { n.disconnect(); } catch (_) {} this.voices = this.voices.filter(x => x !== v); }
@@ -543,7 +544,8 @@ class ExtraAudio {
         const level = lerp(a[i], a[Math.min(a.length - 1, i + 1)], x - i);
         g.cancelScheduledValues(0); g.setValueAtTime(level, this.c.currentTime); g.setValueAtTime(level, t);
       }
-    } else { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); }
+    } else if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
+    else { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); }
     g.linearRampToValueAtTime(0, t + sec);
     try { v.src.stop(t + sec + .02); } catch (_) { this.cleanup(v); }
     v.cut = t + sec;
@@ -563,12 +565,16 @@ class ExtraAudio {
   /* 띵샤를 부딪친다: 두 장이 각자 비명, 그리고 금속 울림 */
   strike(lv, delay) {
     const c = this.c, when = c.currentTime + delay, out = [];
-    for (const v of this.voices) if (v.kind === 'scream') this.fade(v, .12, when);
     for (const side of [0, 1]) {
       const item = this.readyScream(lv, side);
       if (!item) continue;
-      const v = this.play(item, { when: when + side * .014, gain: (lv === 0 ? .62 : TUNE.scream.gain) * (side ? .92 : 1), pan: side ? .34 : -.34, room: TUNE.scream.room, kind: 'scream', side });
-      v.lv = lv;
+      const previous = this.voices.filter(v => v.kind === 'scream' && v.side === side && !v.fading && v.end > when);
+      const continuing = previous.length > 0, stage = item.stage ?? lv;
+      for (const v of previous) this.fade(v, .28, when);
+      // 연타는 자음 공격부를 되감지 않고 아아아 구간으로 연결한다. 최대 단계에서도 같은 첫 음절을 반복하지 않는다.
+      const offset = continuing ? .24 + Math.random() * .28 : 0;
+      const v = this.play(item, { when: when + side * .014, gain: (stage === 0 ? .62 : TUNE.scream.gain) * (side ? .92 : 1), pan: side ? .34 : -.34, room: TUNE.scream.room, kind: 'scream', side, offset, attack: continuing ? .24 : 0 });
+      v.lv = stage;
       this.recent.push(v); out.push(v);
       this.refill(this.pools.scream[lv][side], lv === TUNE.scream.level.length - 1 ? 1 : 2);
     }
@@ -576,9 +582,9 @@ class ExtraAudio {
       /* 연타 때 4.6초짜리 금속 꼬리가 수십 개 겹치지 않게, 오래된 울림만 부드럽게 덜어낸다. */
       const ringing = this.voices.filter(v => v.kind === 'ting' && v.side === side && !v.fading);
       while (ringing.length >= 3) this.fade(ringing.shift(), .12, when);
-      this.play(this.tingBuf[side], { when, gain: TUNE.ting.gain * (.8 + .2 * Math.max(0, lv - 1)), pan: side ? .42 : -.42, dest: this.ringBus, kind: 'ting', side });
+      this.play(this.tingBuf[side], { when, gain: TUNE.ting.gain * (.8 + .4 * clamp(TUNE.scream.level[lv])), pan: side ? .42 : -.42, dest: this.ringBus, kind: 'ting', side });
     }
-    this.recent = this.recent.filter(v => c.currentTime < v.start + v.dur + 1.2);
+    this.recent = this.recent.filter(v => c.currentTime < (v.cut ?? v.end) + 1.2);
     return out;
   }
   /* 비명이 지금 어디쯤인지: 얼굴과 떨림이 이 값을 따른다 */
@@ -586,7 +592,7 @@ class ExtraAudio {
     const now = this.c.currentTime - this.lag(); let best = null;
     for (const v of this.recent) if (v.side === side && now >= v.start - .001 && (!best || v.start > best.start)) best = v;
     if (!best) return null;
-    const t = now - best.start, cut = best.cut !== undefined && now > best.cut ? Math.max(0, 1 - (now - best.cut) / .12) : 1;
+    const t = now - best.start + (best.offset || 0), cut = best.cut !== undefined && now > best.cut ? Math.max(0, 1 - (now - best.cut) / .12) : 1;
     const S = k => sampleTrack(best.track, k, t);
     return { t, lv: best.lv || 0, open: S('open') * cut, round: S('round'), squeeze: S('squeeze'), shiver: S('shiver') * cut, amp: S('amp') * cut };
   }
@@ -620,7 +626,7 @@ class ExtraAudio {
     const midi = S.toneMidi[step], f0 = 440 * Math.pow(2, (midi - 69) / 12);
     this.ocarinaWave ||= c.createPeriodicWave(new Float32Array(5), new Float32Array([0, 1, .16, .045, .012]), { disableNormalization: true });
     const src = c.createOscillator(), filter = c.createBiquadFilter(), g = c.createGain(), p = c.createStereoPanner(), send = c.createGain();
-    src.setPeriodicWave(this.ocarinaWave); filter.type = 'lowpass'; filter.frequency.value = 1100; filter.Q.value = .5;
+    src.setPeriodicWave(this.ocarinaWave); filter.type = 'lowpass'; filter.frequency.value = 1800; filter.Q.value = .5;
     src.frequency.setValueAtTime(f0, when); src.frequency.setValueAtTime(f0, when + dur * .55); src.frequency.linearRampToValueAtTime(f0 * .996, when + dur);
     const curve = new Float32Array(Math.ceil(dur * 100) + 1);
     for (let i = 0; i < curve.length; i++) {
@@ -685,8 +691,9 @@ function ocaFaceSteps(out, lod) {
   });
 }
 function ocaNostrilPoint(side, u, v, p) {
-  const a = u * TAU, g = p.grief;
-  return ocaMapper(side * (.185 + .018 * g) + Math.cos(a) * (.040 + .020 * g) * v, 1.862 + Math.sin(a) * (.017 + .014 * g) * v, p, .006);
+  const a = u * TAU, g = p.grief, inhale = p.blink || 0;
+  /* 코의 곡면을 잇는 피부 삼각형 아래로 검은 구멍이 잠기지 않게 들숨 때 여유를 둔다. */
+  return ocaMapper(side * (.185 + .018 * g) + Math.cos(a) * (.040 + .020 * g + .025 * inhale) * v, 1.862 + Math.sin(a) * (.017 + .014 * g + .025 * inhale) * v, p, .006 + .040 * inhale);
 }
 /* 평평한 판 위에서는 볼 얼굴의 넓은 부풂이 얼굴 테두리에서 벽처럼 끊겨 보인다: 가장자리로 갈수록 부드럽게 눕힌다 */
 function faceWindow(x, y) { return (1 - smooth(1.10, 1.64, Math.abs(x))) * smooth(.42, .80, y) * (1 - smooth(2.76, 3.03, y)); }
@@ -997,11 +1004,12 @@ function swellPoint(p, s) { // 셰이더(VERT_B)와 같은 계산
 /* 얼굴: 머리(왼쪽 불룩한 부분) 앞면. 볼 얼굴 좌표 → X0,Y0 중심, SC배 */
 const OF = { SC: .60, X0: -1.62, Y0: .14, relief: 1.25, lift: .004 };
 function ocaMapper(x, y, p, extra = 0) {
-  /* 콧구멍만 늘린 검은 판을 얹지 않고 코 주변 피부까지 같은 표면 위에서 함께 벌린다. */
+  /* 피부와 콧구멍을 같은 완만한 변형으로 벌린다. 좁은 가우스 변형은 코 가운데를
+   * 심하게 압축해 구멍 위로 피부가 덮인 듯 보이므로, 접히지 않는 완만한 꼬리를 쓴다. */
   const inhale = p.blink || 0, nx = x, ny = y;
   if (inhale) for (const side of [-1, 1]) {
-    const dx = nx - side * .194, dy = ny - 1.862, weight = Math.exp(-((dx / .13) ** 2) - ((dy / .10) ** 2)) * inhale;
-    x += dx * 1.25 * weight; y += dy * 1.90 * weight;
+    const dx = nx - side * .194, dy = ny - 1.862, weight = inhale / (1 + (dx / .12) ** 2 + (dy / .095) ** 2);
+    x += dx * .90 * weight; y += dy * 1.80 * weight;
   }
   const w = faceWarp(x, y, p), f = ocaFront(OF.X0 + w[0] * OF.SC, OF.Y0 + (w[1] - FACE_MID) * OF.SC);
   const rel = (flatSkin(x, y, p.grief, 0, .55) + extra) * OF.SC * OF.relief + OF.lift;
@@ -1133,14 +1141,15 @@ class ExtraVisuals {
       if (age < .06) { const k = age / .06; x = lerp(rest, contact, k * k); roll = -.10 * k; }
       else if (age < 3) { const a = age - .06; x = rest - (rest - contact) * Math.exp(-a * 6.5) * Math.cos(a * 15); roll = .16 * Math.exp(-a * 4.2) * Math.sin(a * 17 + 1.2); }
       const shiver = st ? st.shiver : 0, scream = st ? st.amp : 0;
-      const tremble = reduced * (.016 * shiver + .006 * scream) * (st && st.lv === 0 ? .72 : 1 + .3 * (st ? Math.max(0, st.lv - 1) : 0));   // 악을 쓰며 부들부들 떤다. 연달아 칠수록 더
+      const intensity = st ? TUNE.scream.level[st.lv] : 0, strength = clamp(intensity), strain = Math.max(0, intensity - 1);
+      const tremble = reduced * (.016 * shiver + .006 * scream) * (st && st.lv === 0 ? .72 : 1 + .6 * strength + .8 * strain);   // 강도에 맞춰 떨고, 상위 절규에서 더 몸부림친다
       const sway = .012 * Math.sin(t * 1.3 + b.side) * reduced;
       const pos = [b.side * x + tremble * Math.sin(t * 61 + b.side * 2), 1.50 + tremble * .8 * Math.sin(t * 73 + 1), 0];
       b.matrix = M.model(pos, 1, [.92 + sway + tremble * 2 * Math.sin(t * 57), -b.side * .13, b.side * (.10 + roll * reduced) + tremble * Math.sin(t * 67)]);
       /* 표정: 비명 트랙을 그대로 따른다. 입은 비명 소리대로 벌어지고, 분노는 치는 순간 치솟았다가 소리가 끝난 뒤 천천히 가라앉는다.
-       * 연달아 칠수록(lv 0→3) 약한 비명부터 중간 분노, 최대 절규까지 일그러진다. 쉬면 무표정 */
+       * 연달아 칠수록(lv 0→11) 약한 비명부터 중간 분노, 최대 절규까지 일그러진다. 쉬면 무표정 */
       const P = this.lastPose[b.side < 0 ? 0 : 1];
-      const want = st ? { open: Math.min(1, st.open * (st.lv === 0 ? .68 : 1.02) * (1 - .18 * st.round)), expression: Math.min(1, st.squeeze * (st.lv === 0 ? .42 : 1)), blink: st.lv === 0 ? 0 : Math.min(1, st.squeeze * (.10 + .45 * (st.lv - 1)) * Math.min(1, st.open * 1.35)) } : { open: 0, expression: 0, blink: 0 };
+      const want = st ? { open: Math.min(1, st.open * (st.lv === 0 ? .68 : .82 + .22 * strength + .16 * strain) * (1 - .18 * st.round)), expression: Math.min(1, st.squeeze * (st.lv === 0 ? .42 : .5 + .5 * strength)), blink: st.lv === 0 ? 0 : Math.min(1, st.squeeze * (.10 + .65 * strength + .4 * strain) * Math.min(1, st.open * 1.35)) } : { open: 0, expression: 0, blink: 0 };
       const k = 1 - Math.exp(-dt * 26), kr = 1 - Math.exp(-dt * 9);
       P.open = lerp(P.open, want.open, want.open > P.open ? k : kr); P.expression = lerp(P.expression, want.expression, want.expression > P.expression ? k : kr * .8); P.blink = lerp(P.blink, want.blink, want.blink > P.blink ? k : kr * .8);
       for (const p of b.parts) { p.model = p.local ? M.mul(b.matrix, p.local) : b.matrix; if (p.face) { p.open = P.open; p.expression = P.expression; p.blink = P.blink; } p.seed = b.side > 0 ? 3.1 : 1.3; p.energy = 0; }
@@ -1401,7 +1410,8 @@ class ExtraController {
     if (this.mode !== mode) return;
     if (mode === 'tingsha') {
       const now = this.app.audio.ctx.currentTime; if (now - this.lastStrike < .16) return;
-      this.level = now - this.lastStrike < TUNE.scream.chain ? Math.min(TUNE.scream.level.length - 1, this.level + 1) : 0;
+      const ongoing = this.sound.voices.some(v => v.kind === 'scream' && !v.fading && v.end > now);
+      this.level = ongoing && now - this.lastStrike < TUNE.scream.chain ? Math.min(TUNE.scream.level.length - 1, this.level + 1) : 0;
       this.lastStrike = now;
       const delay = .06; this.sound.strike(this.level, delay); this.visual.strike(this.app.time + this.app.audio.lag());
       return;
@@ -1438,5 +1448,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '4.3.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '4.4.0', tune: TUNE, voice: VOICE };
 })();
