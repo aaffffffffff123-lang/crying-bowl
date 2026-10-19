@@ -27,7 +27,7 @@ const TUNE = {
   ting: { gain: .16, f: [2637.02, 2650.5] },   // 부딪치는 금속음 (UI 팅샤와 같은 음)
   sigh: {
     gain: .95,                 // 한숨 크기
-    toneGain: .95,             // 오카리나 기본음: 기존 .27의 약 3.5배, 한숨과 함께 또렷하게
+    toneGain: .72,             // 오카리나만 한 걸음 뒤로 물려 한숨보다 앞서지 않게
     toneMidi: [69, 67, 64, 62, 60], // 짧은 들숨부터 A4·G4·E4·D4·C4: 한 옥타브 위
     toneHolds: [.9, 1.5, 2.2, 3.4], // 길게 들이쉴수록 낮은 음
     inhaleGain: .15,           // 들숨 크기 (날숨보다 한참 작게: 실제 한숨도 들숨은 거의 안 들린다)
@@ -639,7 +639,9 @@ class ExtraAudio {
     const src = c.createOscillator(), filter = c.createBiquadFilter(), g = c.createGain(), p = c.createStereoPanner(), send = c.createGain();
     const vibrato = c.createOscillator(), vibratoGain = c.createGain();
     src.setPeriodicWave(this.ocarinaWave); filter.type = 'lowpass'; filter.frequency.value = 3200; filter.Q.value = .55;
-    src.frequency.setValueAtTime(f0, when); src.frequency.setValueAtTime(f0, when + dur * .55); src.frequency.linearRampToValueAtTime(f0 * .996, when + dur);
+    src.frequency.setValueAtTime(f0, when);
+    src.frequency.setValueAtTime(f0, when + dur * .50);
+    src.frequency.exponentialRampToValueAtTime(f0 * .99, when + dur);
     src.detune.setValueAtTime(-8, when); src.detune.linearRampToValueAtTime(0, when + Math.min(.11, dur * .12));
     vibrato.frequency.value = 5.1; vibratoGain.gain.setValueAtTime(0, when);
     vibratoGain.gain.setValueAtTime(0, when + Math.min(.32, dur * .22));
@@ -648,7 +650,8 @@ class ExtraAudio {
     const curve = new Float32Array(Math.ceil(dur * 100) + 1);
     for (let i = 0; i < curve.length; i++) {
       const t = dur * i / (curve.length - 1), flow = clamp(sampleTrack(track, 'flow', t));
-      curve[i] = S.toneGain * Math.sqrt(flow) * smooth(0, .16, t) * (1 - smooth(Math.max(.16, dur - .45), dur, t));
+      const dying = 1 - smooth(dur * .62, dur, t);
+      curve[i] = S.toneGain * Math.pow(flow, .58) * smooth(0, .16, t) * dying;
     }
     curve[0] = curve[curve.length - 1] = 0;
     g.gain.value = 0; g.gain.setValueCurveAtTime(curve, when, dur); p.pan.value = 0; send.gain.value = .12;
@@ -1481,5 +1484,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '4.6.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '4.7.0', tune: TUNE, voice: VOICE };
 })();
