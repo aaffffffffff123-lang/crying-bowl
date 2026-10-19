@@ -1,14 +1,15 @@
-/* CRYING BOWL — 띵샤와 오카리나 v2
+/* CRYING BOWL — 띵샤와 오카리나 v3
  * index.html 맨 아래 </body> 바로 위의 한 줄:
- *   <script src="./extra-instruments.js?v=2"></script>
+ *   <script src="./extra-instruments.js?v=1"></script>
  * 이 파일은 index.html과 같은 폴더에 둡니다. 외부 라이브러리·녹음 파일 없이 기존 WebGL과 Web Audio만 씁니다.
  *
  * 띵샤: 두 장이 부딪치면 둘 다 "꺄아아앙악!" 하고 비명을 지릅니다. 연달아 치면 비명이 길고 거칠어집니다.
- *       얼굴은 싱잉볼과 같은 조각 얼굴(같은 표정 단계)을 띵샤 판에 옮겨 새긴 것입니다.
- * 오카리나: 누르고 있는 동안 숨을 들이쉬고(몸이 부풀고), 떼면 "하아아" / "후우우" 한숨을 쉽니다.
- *           짧게 누르면 짧은 들숨 뒤 "후우", 길게 들이쉴수록 깊고 긴 "하아아"가 됩니다.
+ *       얼굴은 개빡친 얼굴입니다. 쉴 때는 눈썹을 내리깔고 입을 꾹 다물고 있다가, 치면 눈썹이 V자로 내리꽂히고
+ *       콧등이 구겨지며 입이 네모나게 찢어져 윗니·아랫니를 드러내고 악을 씁니다. 연달아 칠수록 더 일그러집니다.
+ * 오카리나: 누르고 있는 동안 숨을 들이쉬며 몸통이 부풀고, 떼면 "하아아" / "후우우" 한숨을 쉬며 원래보다 홀쭉하게
+ *           쪼그라들었다가(주름이 잡힌다) 천천히 돌아옵니다. 짧게 누르면 짧은 들숨 뒤 "후우", 길게 들이쉴수록 깊고 긴 "하아아".
  *
- * 소리 조율은 아래 TUNE 표의 숫자만 바꾸면 됩니다.
+ * 소리와 부푸는 정도는 아래 TUNE 표의 숫자만 바꾸면 됩니다.
  */
 (() => {
 'use strict';
@@ -30,6 +31,11 @@ const TUNE = {
     f0: [112, 126],            // '하아' / '후우' 목소리 높이
     room: .20
   },
+  breath: {
+    swell: .17,                // 끝까지 들이쉬었을 때 오카리나 몸통이 굵어지는 비율 (0.17 = 17%)
+    shrink: .15,               // 깊은 한숨을 다 내쉬었을 때 원래보다 홀쭉해지는 비율. 짧은 한숨은 이보다 덜 쪼그라든다
+    back: 1.6                  // 한숨이 끝난 뒤 원래 크기로 돌아오는 데 걸리는 시간(초)
+  },
   drone: { idle: .65, voice: .42 }   // 이 두 악기에서는 바닥 베이스를 조금 낮춘다 (목소리가 묻히지 않게). 볼 화면으로 가면 원래대로
 };
 
@@ -40,7 +46,8 @@ const GLSL_A = `
  if(uKind>20.5&&uKind<21.5){
   float xr=length(vLocal.xz),xw=noise(vLocal*7.+uSeed);
   float xfw=fwidth(xr)*150.,xl=.5+.5*sin(xr*150.+xw*2.6)*(1.-smoothstep(.25,.75,xfw));
-  float xg=-.010*exp(-pow((xr-1.071)/.0045,2.))-.008*exp(-pow((xr-1.097)/.004,2.))-.004*exp(-pow((xr-.170)/.006,2.));
+  float g1=(xr-1.071)/.0045,g2=(xr-1.097)/.004,g3=(xr-.170)/.006;
+  float xg=-.010*exp(-g1*g1)-.008*exp(-g2*g2)-.004*exp(-g3*g3);
   float xh=(xl*.0009+xg)*vObjectScale;
   vec3 xdx=dFdx(vWorld),xdy=dFdy(vWorld),xa=cross(xdy,N),xb=cross(N,xdx);float xdet=dot(xdx,xa);
   N=normalize(abs(xdet)*N-sign(xdet)*(dFdx(xh)*xa+dFdy(xh)*xb));
@@ -69,10 +76,31 @@ const GLSL_B = `
   light=mix(uColor*(.30+nl*.55),uColor*.010,hd)+uColor*spec*(1.-hd)*.6;
  }
 `;
+/* 오카리나 숨: 몸통 단면을 몸통 가운데 줄기(uSwAxis)에서 바깥으로 부풀리거나 오므린다.
+ * 위치만 보고 옮기므로 몸통·얼굴·구멍·취구가 함께 움직이고 서로 떨어지지 않는다. 단면 밖(취구)은 몸통 아랫면과 같이 평행 이동한다 */
+const VERT_DECL = 'void main(){\n vec3 p=aPosition,n=aNormal;', VERT_AT = 'vLocal=p;vUV=aUV;';
+const VERT_A = 'uniform float uSwell;uniform vec4 uSwAxis[14];\n';
+const VERT_B = `
+ if(abs(uSwell)>1e-4){
+  float sx=clamp((p.x+3.25)*2.,0.,12.999);int si=int(sx);vec4 ax=mix(uSwAxis[si],uSwAxis[si+1],sx-float(si));
+  vec2 d=vec2(p.y-ax.x,p.z),lim=max(ax.yz,vec2(.05));float w=uSwell*ax.w;vec2 k=w*step(abs(d),lim);
+  p.yz+=clamp(d,-lim,lim)*w;p.x+=(p.x+.3)*w*.10;
+  n=normalize(vec3(n.x,n.yz/(1.+k)));
+  if(uSwell<0.){
+   vec2 dd=clamp(d,-lim,lim);float r=max(length(dd),.3),th=atan(dd.x,dd.y);vec2 u2=dd/r;
+   float p1=p.x*6.+th*4.+1.3,p2=p.x*9.-th*3.;
+   float fx=(p.x+1.62)/1.1,ft=th/.75;fx*=fx;ft*=ft;
+   float a=-uSwell*.22*ax.w*step(abs(d.x),lim.x)*(1.-exp(-fx*fx-ft*ft));
+   p.yz+=u2*a*(.6*sin(p1)+.4*sin(p2));
+   n=normalize(n-vec3(a*(3.6*cos(p1)+3.6*cos(p2)),0.,0.)-vec3(0.,u2.y,-u2.x)*a*(2.4*cos(p1)-1.2*cos(p2))/r);
+  }
+ }
+`;
 {
   const compile0 = Renderer.prototype.compile;
   Renderer.prototype.compile = function (v, f) {
     if (typeof f === 'string' && f.includes(FRAG_A) && f.includes(FRAG_B) && !f.includes('uKind>20.5')) f = f.replace(FRAG_A, GLSL_A + FRAG_A).replace(FRAG_B, GLSL_B + FRAG_B);
+    if (typeof v === 'string' && v.includes(VERT_DECL) && v.includes(VERT_AT) && !v.includes('uSwell')) v = v.replace(VERT_DECL, VERT_A + VERT_DECL).replace(VERT_AT, VERT_AT + VERT_B);
     return compile0.call(this, v, f);
   };
 }
@@ -329,7 +357,13 @@ class ExtraAudio {
       return w;
     } catch (_) { return null; }
   }
-  wrap(r) { const b = this.c.createBuffer(1, Math.max(1, r.data.length), this.sr); b.copyToChannel(r.data, 0); return { buffer: b, track: r.track || {}, dur: r.dur }; }
+  wrap(r) {
+    const b = this.c.createBuffer(1, Math.max(1, r.data.length), this.sr); b.copyToChannel(r.data, 0);
+    /* 한숨: 지금까지 내쉰 숨의 비율(0→1). 오카리나가 이만큼 쪼그라든다 */
+    const tr = r.track || {};
+    if (tr.flow && !tr.out) { const n = tr.flow.length, out = new Float32Array(n); let sum = 0; for (let i = 0; i < n; i++) { sum += tr.flow[i]; out[i] = sum; } if (sum > 0) for (let i = 0; i < n; i++) out[i] /= sum; tr.out = out; }
+    return { buffer: b, track: tr, dur: r.dur };
+  }
   gen(fn, o) {
     o = Object.assign({ sr: this.sr, seed: (this.seed = (this.seed * 1103515245 + 12345) >>> 0) || 7 }, o);
     return new Promise(resolve => {
@@ -384,6 +418,7 @@ class ExtraAudio {
     for (const side of [0, 1]) {
       const item = this.takeNow(this.pools.scream[lv][side]);
       const v = this.play(item, { when: when + side * .014, gain: TUNE.scream.gain * (side ? .92 : 1), pan: side ? .34 : -.34, room: TUNE.scream.room, kind: 'scream', side });
+      v.lv = lv;
       this.recent.push(v); out.push(v);
       this.refill(this.pools.scream[lv][side], lv === 2 ? 1 : 2);
     }
@@ -398,7 +433,7 @@ class ExtraAudio {
     if (!best) return null;
     const t = now - best.start, cut = best.cut !== undefined && now > best.cut ? Math.max(0, 1 - (now - best.cut) / .12) : 1;
     const S = k => sampleTrack(best.track, k, t);
-    return { t, open: S('open') * cut, round: S('round'), squeeze: S('squeeze'), shiver: S('shiver') * cut, amp: S('amp') * cut };
+    return { t, lv: best.lv || 0, open: S('open') * cut, round: S('round'), squeeze: S('squeeze'), shiver: S('shiver') * cut, amp: S('amp') * cut };
   }
   /* 오카리나: 들숨 시작 */
   breatheIn() {
@@ -432,7 +467,7 @@ class ExtraAudio {
     }
     const t = now - b.out, tr = b.ex.track, S = k => sampleTrack(tr, k, t);
     if (t > b.ex.dur + 1.6) { this.breath = null; return null; }
-    return { phase: 'out', t, kind: b.kind, held: b.held, dur: b.ex.dur, flow: S('flow'), voice: S('voice'), open: S('open'), round: S('round'), amp: S('amp') };
+    return { phase: 'out', t, kind: b.kind, held: b.held, dur: b.ex.dur, flow: S('flow'), voice: S('voice'), open: S('open'), round: S('round'), amp: S('amp'), out: t >= b.ex.dur ? 1 : S('out') };
   }
 }
 function sampleTrack(tr, key, t) {
@@ -450,12 +485,9 @@ function onSurface(mapper, build, eyeFn, mouthFn) {
   window.faceXYZ = mapper; if (eyeFn) window.eyeContour = eyeFn; if (mouthFn) window.mouthContour = mouthFn;
   try { return build(); } finally { window.faceXYZ = keep; window.eyeContour = keepEye; window.mouthContour = keepMouth; }
 }
-const BOWL_EYE = window.eyeContour, BOWL_MOUTH = window.mouthContour;
-/* 비명 입: 볼의 우는 입은 옆으로 찢어지지만, '꺄아악'은 턱이 뚝 떨어지며 세로로 크게 벌어진다 */
-const SCREAM_MOUTH = (a, p) => { const m = BOWL_MOUTH(a, { open: p.open, grief: p.grief * .3, blink: (p.blink || 0) * .3 }); return [m[0] * (1 - .14 * p.open), m[1] - .06 * p.open * Math.max(0, -Math.sin(a))]; };
-/* 볼 얼굴은 입을 벌리면 눈도 같이 뜬다(울먹이는 눈). 띵샤 비명은 눈을 질끈, 오카리나 한숨은 눈을 감은 채로 */
+const BOWL_EYE = window.eyeContour;
+/* 볼 얼굴은 입을 벌리면 눈도 같이 뜬다(울먹이는 눈). 오카리나 한숨은 눈을 감은 채로 */
 const EYES = {
-  squeeze: (side, a, p) => BOWL_EYE(side, a, { open: p.open * .40 * (1 - .6 * (p.blink || 0)), grief: p.grief, blink: p.blink }),
   closed: (side, a, p) => BOWL_EYE(side, a, { open: p.open * .10, grief: p.grief, blink: p.blink })
 };
 /* 평평한 판 위에서는 볼 얼굴의 넓은 부풂이 얼굴 테두리에서 벽처럼 끊겨 보인다: 가장자리로 갈수록 부드럽게 눕힌다 */
@@ -505,16 +537,166 @@ const FACE_MID = (FACE.bottom + FACE.top) / 2;
  * 지름 2.4의 두꺼운 주물 청동 판. 가운데 꼭지(가죽끈 매듭)가 얼굴 이마 위에 오고, 얼굴은 판 아래쪽에 새겨진다.
  * 판의 로컬 좌표: +y = 바깥면(얼굴 쪽), 얼굴의 위쪽 = -z.
  */
-const TG = { R: 1.2, Ri: 1.12, SC: .42, Z0: .756, relief: 1.0, lift: .003, boss: .10 };
+const TG = { R: 1.2, Ri: 1.12, SC: .42, Z0: .73, relief: 1.15, lift: .003, boss: .10 };
 function plateTop(r) { const q = Math.min(1, r / TG.Ri), b = Math.min(1, r / TG.boss); return .058 + .115 * (1 - q * q) + .060 * Math.pow(Math.cos(b * Math.PI / 2), 2); }
 function plateNormal(X, Z) { const e = .003, f = (x, z) => plateTop(Math.hypot(x, z)); return V.norm([-(f(X + e, Z) - f(X - e, Z)) / (2 * e), 1, -(f(X, Z + e) - f(X, Z - e)) / (2 * e)]); }
-function tingMapper(x, y, p, extra = 0) {
-  const w = faceWarp(x, y, p); let X = w[0] * TG.SC, Z = TG.Z0 - (w[1] - FACE.cy) * TG.SC;
-  /* 얼굴 사각형의 아래 귀퉁이는 판 밖으로 나간다: 판 테두리 안쪽으로 부드럽게 접어 넣는다 (귀퉁이엔 주름이 없다) */
+/* 띵샤 판 위의 한 점: 얼굴 좌표 (x, y)를 판 위로 옮기고 판 바깥쪽으로 rel(얼굴 단위)만큼 띄운다.
+ * 얼굴 사각형의 아래 귀퉁이는 판 밖으로 나가므로 판 테두리 안쪽으로 부드럽게 접어 넣는다 (귀퉁이엔 높낮이가 없다) */
+function tingPlace(x, y, rel) {
+  let X = x * TG.SC, Z = TG.Z0 - (y - FACE.cy) * TG.SC;
   const r = Math.hypot(X, Z), r0 = .96, rc = TG.Ri - .004;
   if (r > r0) { const rr = r0 + (rc - r0) * Math.tanh((r - r0) / (rc - r0)); X *= rr / r; Z *= rr / r; }
-  const n = plateNormal(X, Z), rel = (flatSkin(x, y, p.grief, p.blink || 0, .25) + extra) * TG.SC * TG.relief + TG.lift, h = plateTop(Math.hypot(X, Z));
-  return [X + n[0] * rel, h + n[1] * rel, Z + n[2] * rel];
+  const n = plateNormal(X, Z), h = plateTop(Math.hypot(X, Z)), k = rel * TG.SC * TG.relief + TG.lift;
+  return [X + n[0] * k, h + n[1] * k, Z + n[2] * k];
+}
+
+/* ----- 띵샤 얼굴: 개빡쳐서 악쓰는 얼굴 -----
+ * 볼 얼굴과 같은 뼈대(입 둘레·눈 둘레에서 바깥으로 뻗는 격자, 미간·이마 판)에 표정만 새로 깎았다.
+ * 좌표는 볼 얼굴과 같다: x -1.66~1.66, y 0.40(턱)~3.035(이마), 입 가운데 y 1.28, 눈 y 2.4.
+ *  · 쉴 때: 눈썹을 내리깔고 입꼬리를 처뜨린 채 꾹 다문, 부글부글한 얼굴
+ *  · expression(분노): 눈썹이 V자로 내리꽂히고, 미간에 11자 주름, 콧등이 구겨지고 콧방울이 벌어지고 광대가 치솟는다
+ *  · open(입): 네모나게 찢어지며 윗니·아랫니가 드러난다
+ *  · blink(끝까지): 주름이 더 깊어지고 눈이 더 가늘어진다. 연달아 칠수록 여기까지 간다 (입 모양은 건드리지 않는다)
+ */
+/* 입: 다물면 양 끝이 처진 채 꾹 다물고, 벌리면 아래가 조금 더 넓은 둥근 네모로 찢어진다 */
+function rgMouthShape(p) {
+  const o = p.open, g = p.grief;
+  return { o, g, W: .52 + .05 * g + .38 * o, yc: 1.29 - .05 * o, up: .014 + .25 * o + .07 * o * g, dn: .014 + .44 * o, n: 2 + 2.8 * o };
+}
+function rgMouth(a, p) {
+  const M = rgMouthShape(p), c = Math.cos(a), s = Math.sin(a), e = 2 / M.n;
+  const cx = Math.sign(c) * Math.pow(Math.abs(c), e), sy = Math.sign(s) * Math.pow(Math.abs(s), e);
+  const x = M.W * cx * (1 - .08 * M.o * sy);
+  const bend = -(.045 + .05 * M.g) * (1 - M.o) * c * c + (s > 0 ? .035 * M.o * M.g * (1 - Math.abs(cx)) : 0);
+  return [x, M.yc + sy * (s > 0 ? M.up : M.dn) + bend];
+}
+/* 눈: 바깥 끝이 올라간 비스듬한 눈. 위 눈꺼풀은 평평하게 깎이고 코 쪽에서 더 내려와 눈썹에 눌린다 */
+function rgEyeShape(p) {
+  const g = p.grief, m = p.blink || 0;
+  return { cx: .79, hw: .42, mid: 2.40 - .02 * g, tilt: .05 + .04 * g, ht: .112 - .026 * g - .010 * m, hb: .060 - .010 * g - .005 * m };
+}
+function rgEye(side, a, p) {
+  const E = rgEyeShape(p), c = Math.cos(a), s = Math.sin(a);
+  const top = Math.pow(Math.max(0, s), .55) * (.62 + .46 * c), bot = Math.pow(Math.max(0, -s), .9) * (.95 + .05 * c);
+  return [side * (E.cx + E.hw * c), E.mid + E.tilt * c + E.ht * top - E.hb * bot];
+}
+function rgEyeCenter(side, p) { const E = rgEyeShape(p); return [side * (E.cx + .05), E.mid + .03]; }
+/* 눈썹 선: 안쪽 끝에서 바깥 끝까지. 화날수록 안쪽이 눈 바로 위로 내리꽂힌다 */
+function rgBrow(ax, p) {
+  const g = p.grief, m = p.blink || 0, xi = .15, xo = 1.42;
+  const t = clamp((ax - xi) / (xo - xi)), yi = 2.66 - .16 * g - .03 * m, yo = 2.82 + .08 * g;
+  return { t, yi, y: lerp(yi, yo, t) + (.022 + .016 * g) * Math.sin(Math.PI * t) };
+}
+function rgWindow(x, y) { return (1 - smooth(1.34, 1.64, Math.abs(x))) * smooth(.42, .72, y) * (1 - smooth(2.95, 3.035, y)); }
+/* 얼굴 높낮이 (볼 얼굴 좌표 단위). g = 분노, m = 끝까지, o = 입 */
+function rageSkin(x, y, p) {
+  const g = p.grief, m = p.blink || 0, o = p.open, ax = Math.abs(x), sx = x < 0 ? -1 : 1;
+  const G = (cx, cy, wx, wy) => gauss(x, y, cx, cy, wx, wy), E = (d, w) => Math.exp(-(d / w) * (d / w));
+  let z = 0;
+  /* 코: 콧날과 코끝. 화나면 콧방울이 벌어지며 들리고, 콧등에 가로 주름이 잡힌다 */
+  z += (.055 + .02 * g) * G(0, 2.20, .24, .42) + (.09 + .045 * g) * G(0, 1.95, .28, .17);
+  z += (.025 + .06 * g + .02 * m) * (G(-.27 - .04 * g, 1.91 + .03 * g, .15 + .03 * g, .10) + G(.27 + .04 * g, 1.91 + .03 * g, .15 + .03 * g, .10));
+  z += .015 * G(0, 1.69, .10, .16);
+  const nose = Math.exp(-Math.pow(ax / .21, 4));
+  for (let k = 0; k < 3; k++) { const yy = 2.10 + k * .082; z -= (g * (.020 - k * .004) + m * .008) * E(y - yy, .019) * nose; z += g * .010 * E(y - yy - .04, .022) * nose; }
+  /* 눈썹: 안쪽이 두꺼운 근육 덩어리. 아래쪽은 깎아지르고 위쪽은 완만하다. 그 아래로 눈두덩이 푹 꺼진다 */
+  const B = rgBrow(ax, p), d = y - B.y, be = smooth(-.12, .10, B.t) * (1 - smooth(.78, 1.02, B.t)), thick = 1.25 - .5 * B.t;
+  z += (.07 + .08 * g + .03 * m) * thick * be * (d < 0 ? E(d, .055 + .012 * g) : E(d, (.13 + .04 * g) * thick));
+  z -= (.03 + .05 * g + .015 * m) * be * E(d + .10 + .015 * g, .045);
+  /* 미간: 눈썹 안쪽 끝이 뭉쳐 솟고, 그 위 이마도 불룩해진다. 사이로 11자 주름, 콧뿌리에 가로 주름 */
+  z += (.035 + .07 * g + .02 * m) * (G(-(.20 - .03 * g), B.yi + .05, .12, .11) + G(.20 - .03 * g, B.yi + .05, .12, .11));
+  z += .03 * g * (G(-.17, B.yi + .23, .14, .09) + G(.17, B.yi + .23, .14, .09));
+  const gw = Math.exp(-Math.pow((y - (B.yi + .12)) / .19, 4));
+  z -= (.012 + .05 * g + .02 * m) * (E(x - .065, .024) + E(x + .065, .024)) * gw;
+  z += (.006 + .02 * g) * E(x, .030) * gw;
+  const y0 = B.yi - .09, nr = Math.exp(-Math.pow(x / .16, 4));
+  z -= (.006 + .03 * g + .01 * m) * E(y - y0, .020) * nr;
+  z += .015 * g * E(y - y0 + .04, .03) * nr;
+  /* 광대가 치솟고 아래 눈꺼풀이 밀려 올라간다 */
+  z += (.04 + .09 * g + .03 * o) * G(sx * .86, 1.86 + .05 * g, .40, .30);
+  const ex = (ax - .80) / .44, ew = Math.exp(-Math.pow(ex, 4)), ycr = 2.22 - .09 * ex * ex + .04 * g;
+  z -= (.006 + .022 * g) * E(y - ycr, .03) * ew;
+  z += .02 * g * E(y - ycr - .06, .035) * ew;
+  /* 팔자 주름: 콧방울 옆에서 입꼬리 바깥으로 휘어 내려간다. 광대 살이 그 위로 덮인다 */
+  const ft = (1.95 - y) / 1.05, fx = .34 + .62 * Math.pow(clamp(ft), .75) + .06 * o, fe = smooth(-.05, .15, ft) * (1 - smooth(.80, 1.05, ft));
+  z -= (.008 + .045 * g + .03 * o) * E(ax - fx, .05) * fe;
+  z += (.012 + .06 * g + .04 * o) * E(ax - fx - .12, .10) * fe;
+  /* 입 둘레: 입꼬리 매듭, 입꼬리에서 턱으로 처지는 주름, 꾹 다문 턱의 오돌토돌한 주름, 앙다문 턱 근육 */
+  const M = rgMouthShape(p), mcx = M.W + .06, mcy = M.yc - (.045 + .05 * g) * (1 - o);
+  z += (.010 + .010 * g) * G(sx * mcx, mcy, .09, .09);
+  const xm = M.W - .03 - .05 * (mcy - y), mw = smooth(mcy - .40, mcy - .26, y) * (1 - smooth(mcy - .12, mcy - .02, y));
+  z -= (.004 + .010 * g) * (1 - .5 * o) * E(ax - xm, .04) * mw;
+  z += (.012 + .035 * (1 - o)) * G(0, .66, .32, .15);
+  z += .012 * (1 - o) * (.5 + .5 * g) * Math.cos(x * 31) * Math.cos(y * 29) * G(0, .66, .30, .13);
+  z += .025 * (1 - o) * G(sx * 1.28, 1.05, .16, .24);
+  return z * rgWindow(x, y);
+}
+/* 이: 윗입술 안쪽에 윗니 8개가 매달리고, 아랫입술 안쪽에 아랫니 8개가 선다. 입을 다물면 길이가 0이 되어 숨는다.
+ * u는 입 너비의 86%를 고르게 나눈 자리, v는 잇몸(0)에서 이 끝(1)까지 */
+function rgTooth(upper, u, v, p) {
+  const N = 8, i = Math.min(N - 1, Math.floor(u * N)), q = u * N - i, M = rgMouthShape(p);
+  const xn = (2 * u - 1) * (upper ? .86 : .80), c = Math.sign(xn) * Math.pow(Math.abs(xn), M.n / 2), s = Math.sqrt(Math.max(0, 1 - c * c));
+  const P = rgMouth(Math.atan2(upper ? s : -s, c), p), o = p.open, canine = upper && (i === 1 || i === N - 2) ? 1.14 : 1;
+  const tip = (.74 + .26 * Math.pow(Math.sin(Math.PI * q), .45)) * canine;
+  const L = (upper ? .15 : .11) * o * tip, root = .016 * o, dir = upper ? -1 : 1;
+  return { x: P[0], y: P[1] + dir * (root + v * L), q, P };
+}
+function tingRageMapper(x, y, p, extra = 0) { return tingPlace(x, y, rageSkin(x, y, p) + extra); }
+/* 입 둘레 격자: 입 테두리에서 얼굴 아래 사각형까지. 입술은 얇게 말려 있다 */
+function rgFacePoint(u, v, p) {
+  const a = u * TAU, inside = rgMouth(a, p), outside = faceBoundary(a), k = Math.pow(v, .86);
+  const x = lerp(inside[0], outside[0], k), y = lerp(inside[1], outside[1], k), dist = Math.hypot(x - inside[0], y - inside[1]);
+  const lip = (.016 + .022 * p.open + .008 * p.grief) * Math.exp(-(((dist - .026) / (.038 + .01 * p.open)) ** 2));
+  return tingRageMapper(x, y, p, lip);
+}
+/* 눈 둘레 격자: 눈 테두리에서 눈 상자(볼 얼굴과 같은 상자)까지 */
+function rgEyePatch(side, u, v, p) {
+  const a = u * TAU, ca = Math.cos(a), sa = Math.sin(a), inside = rgEye(side, a, p);
+  const cx = side * .87, cy = 2.425, hw = .69, hh = .385, k = Math.max(Math.abs(ca), Math.abs(sa));
+  const outside = [cx + side * hw * ca / k, cy + hh * sa / k];
+  const x = lerp(inside[0], outside[0], v), y = lerp(inside[1], outside[1], v), d = Math.hypot(x - inside[0], y - inside[1]);
+  return tingRageMapper(x, y, p, (.010 + .02 * p.grief) * Math.exp(-((d / .05) ** 2)) * (1 - smooth(.84, 1, v)));
+}
+/* 눈구멍·입구멍: 테두리 높이에서 가운데로 갈수록 판 속으로 깊어지는 고깔 */
+function rgLens(side, u, v, p) {
+  const c = rgEye(side, u * TAU, p), C = rgEyeCenter(side, p), k = 1 - v * .999, rim = rageSkin(c[0], c[1], p) + .007;
+  return tingPlace(lerp(C[0], c[0], k), lerp(C[1], c[1], k), rim * (1 - v) - v * (.13 + .03 * p.grief));
+}
+const RG_CAVITY = o => .19 + .15 * o;
+function rgCavity(u, v, p) {
+  const c = rgMouth(u * TAU, p), M = rgMouthShape(p), k = 1 - v * .999, rim = rageSkin(c[0], c[1], p) + .010;
+  return tingPlace(c[0] * k, lerp(M.yc - .02 * p.open, c[1], k), rim * (1 - v) - v * RG_CAVITY(p.open));
+}
+/* 이는 바로 뒤 입속 벽보다 조금 앞에 놓인다. 이 사이 틈은 벽보다 깊게 파서 어둡게 보이게 */
+function rgTeethPoint(upper, u, v, p) {
+  const T = rgTooth(upper, u, v, p), M = rgMouthShape(p), cy = M.yc - .02 * p.open;
+  const f = clamp(Math.abs(T.y - T.P[1]) / Math.max(.02, Math.abs(cy - T.P[1]))), rim = rageSkin(T.P[0], T.P[1], p) + .010, s = Math.sin(Math.PI * T.q);
+  return tingPlace(T.x, T.y, rim * (1 - f) - f * RG_CAVITY(p.open) + .016 + .014 * Math.pow(s, .6) - .03 * Math.pow(1 - s, 8));
+}
+/* 콧구멍: 콧방울 밑으로 숨은 납작한 구멍. 화날수록 옆으로 벌어지며 바깥 끝이 들린다 */
+function rgNostril(side, u, v, p) {
+  const a = u * TAU, g = p.grief, m = p.blink || 0, rx = (.046 + .026 * g + .01 * m) * v, ry = (.014 + .008 * g + .003 * m) * v;
+  const x = side * (.20 + .03 * g + .01 * m) + Math.cos(a) * rx, y = 1.848 + .014 * g + Math.sin(a) * ry + .30 * side * Math.cos(a) * rx;
+  return tingRageMapper(x, y, p, .006);
+}
+/* 띵샤 얼굴을 여러 토막으로 나눠 만든다 (한 번에 만들면 화면이 멈칫한다) */
+function rageFaceSteps(out, lod) {
+  const I3 = n => Math.max(3, Math.round(n * lod)), I = n => Math.max(4, Math.round(n * lod)), skin = [], lens = [], nos = [], teeth = [], steps = [];
+  const S = f => steps.push(() => onSurface(tingRageMapper, f));
+  const strips = (n, m, fn, rows) => {
+    const k = Math.max(1, Math.round(m / rows));
+    for (let s = 0; s < k; s++) { const j0 = Math.round(m * s / k), j1 = Math.round(m * (s + 1) / k); S(() => skin.push(morphGrid(n, j1 - j0, (u, v, p) => fn(u, (j0 + v * (j1 - j0)) / m, p)))); }
+  };
+  strips(I3(192), I3(62), rgFacePoint, 6);
+  for (const side of [-1, 1]) strips(I3(112), I3(30), (u, v, p) => rgEyePatch(side, u, v, p), 10);
+  S(() => skin.push(plainFace(-.18, .18, 2.04, 2.81, I3(40), I3(44)), plainFace(-1.66, -1.56, 2.04, 2.81, 5, I3(34)), plainFace(1.56, 1.66, 2.04, 2.81, 5, I3(34))));
+  S(() => skin.push(plainFace(-1.66, 1.66, 2.81, FACE.top, I3(110), I3(18))));
+  for (const side of [-1, 1]) S(() => { lens.push(morphGrid(I(96), I(10), (u, v, p) => rgLens(side, u, v, p))); nos.push(morphGrid(I(20), 4, (u, v, p) => rgNostril(side, u, v, p))); });
+  let cavity = null;
+  S(() => { cavity = morphGrid(I(150), I(14), rgCavity); });
+  S(() => { for (const up of [true, false]) teeth.push(morphGrid(96, 4, (u, v, p) => rgTeethPoint(up, u, v, p))); });
+  steps.push(() => { out.face = { skin: mergeMorph(skin), eyes: mergeMorph(lens), nostrils: mergeMorph(nos), cavity, teeth: mergeMorph(teeth) }; });
+  return steps;
 }
 function tingShellData() {
   const ri = .18, x1 = FACE.x * TG.SC - .022, z0 = TG.Z0 - (FACE.top - FACE.cy) * TG.SC + .022, z1 = TG.Z0 + (FACE.cy - FACE.bottom) * TG.SC - .022;
@@ -571,6 +753,20 @@ function ocaFront(Xm, Ym) { // front surface height field and its normal
   const e = .004, z = f(Xm, Ym), n = V.norm([-(f(Xm + e, Ym) - f(Xm - e, Ym)) / (2 * e), -(f(Xm, Ym + e) - f(Xm, Ym - e)) / (2 * e), 1]);
   return { p: [Xm, Ym, z], n };
 }
+/* 숨 쉴 때 부풀고 오므라드는 기준: 몸통 가운데 줄기의 높이(Yc), 단면 반높이(A), 반두께(B), 부푸는 정도(꼬리는 덜) — X -3.25부터 0.5 간격 */
+const SW_AXIS = (() => { const a = new Float32Array(56); for (let i = 0; i < 14; i++) { const X = -3.25 + i * .5, sl = OC.slice(X); a.set([sl.Yc, sl.A, sl.B, 1 - .5 * smooth(.3, 2.8, X)], i * 4); } return a; })();
+function swellPoint(p, s) { // 셰이더(VERT_B)와 같은 계산
+  const sx = clamp((p[0] + 3.25) * 2, 0, 12.999), i = Math.floor(sx), f = sx - i, ax = [0, 1, 2, 3].map(k => lerp(SW_AXIS[i * 4 + k], SW_AXIS[i * 4 + 4 + k], f));
+  const ly = Math.max(ax[1], .05), lz = Math.max(ax[2], .05), w = s * ax[3];
+  const q = [p[0] + (p[0] + .3) * w * .10, p[1] + clamp(p[1] - ax[0], -ly, ly) * w, p[2] + clamp(p[2], -lz, lz) * w];
+  if (s < 0) {
+    const dy = clamp(p[1] - ax[0], -ly, ly), dz = clamp(p[2], -lz, lz), r = Math.max(Math.hypot(dy, dz), .3), th = Math.atan2(dy, dz);
+    const a = -s * .22 * ax[3] * (Math.abs(p[1] - ax[0]) <= ly ? 1 : 0) * (1 - Math.exp(-Math.pow((q[0] + 1.62) / 1.1, 4) - Math.pow(th / .75, 4)));
+    const del = a * (.6 * Math.sin(q[0] * 6 + th * 4 + 1.3) + .4 * Math.sin(q[0] * 9 - th * 3));
+    q[1] += dy / r * del; q[2] += dz / r * del;
+  }
+  return q;
+}
 /* 얼굴: 머리(왼쪽 불룩한 부분) 앞면. 볼 얼굴 좌표 → X0,Y0 중심, SC배 */
 const OF = { SC: .60, X0: -1.62, Y0: .14, relief: 1.25, lift: .004 };
 function ocaMapper(x, y, p, extra = 0) {
@@ -620,7 +816,7 @@ class ExtraVisuals {
     if (this.jobs[mode]) return this.jobs[mode];
     const P = {}, steps = [];
     if (mode === 'tingsha') {
-      steps.push(...faceSteps(P, tingMapper, .66, [.22, .14], [.12, .06], EYES.squeeze, SCREAM_MOUTH));
+      steps.push(...rageFaceSteps(P, .72));
       steps.push(() => { P.shell = tingShellData(); P.rim = tingRimData(); });
       steps.push(() => this.finishTingsha(P));
     } else {
@@ -641,13 +837,14 @@ class ExtraVisuals {
     const R = this.R, face = P.face;
     const bronze = { kind: 21, color: [.53, .345, .135], metal: .9, rough: .27 }, rim = { kind: 21, color: [.60, .40, .17], metal: .92, rough: .22 };
     const hollow = { kind: 23, color: [.085, .040, .014], metal: 0, rough: .9 }, deep = { kind: 23, color: [.02, .010, .004], metal: 0, rough: .95 };
-    const mesh = { skin: R.mesh(face.skin), eyes: R.mesh(face.eyes), nostrils: R.mesh(face.nostrils), cavity: R.mesh(face.cavity), shell: R.mesh(P.shell), rim: R.mesh(P.rim), knot: R.mesh(sphereData(18, 12)) };
+    const mesh = { skin: R.mesh(face.skin), eyes: R.mesh(face.eyes), nostrils: R.mesh(face.nostrils), cavity: R.mesh(face.cavity), teeth: R.mesh(face.teeth), shell: R.mesh(P.shell), rim: R.mesh(P.rim), knot: R.mesh(sphereData(18, 12)) };
+    const enamel = { kind: 21, color: [.70, .52, .25], metal: .86, rough: .20 };
     this.leather = { kind: 0, color: [.20, .085, .034], metal: 0, rough: .86 };
     this.bells = [-1, 1].map(side => ({
       side, matrix: M.identity(), knotWorld: [0, 0, 0], x: side * 1.45, vx: 0, roll: 0, vroll: 0,
       parts: [
         { mesh: mesh.shell, mat: bronze }, { mesh: mesh.rim, mat: rim },
-        { mesh: mesh.skin, mat: bronze, face: true }, { mesh: mesh.cavity, mat: hollow, face: true }, { mesh: mesh.eyes, mat: hollow, face: true }, { mesh: mesh.nostrils, mat: deep, face: true },
+        { mesh: mesh.skin, mat: bronze, face: true }, { mesh: mesh.cavity, mat: hollow, face: true }, { mesh: mesh.teeth, mat: enamel, face: true }, { mesh: mesh.eyes, mat: hollow, face: true }, { mesh: mesh.nostrils, mat: deep, face: true },
         { mesh: mesh.knot, mat: this.leather, local: M.model([0, plateTop(0) + .028, 0], [.062, .05, .062]) }
       ]
     }));
@@ -670,6 +867,7 @@ class ExtraVisuals {
     this.mouthNormal = ocaFront(OF.X0, OF.Y0 + (FACE.cy - FACE_MID) * OF.SC).n;
     this.mistBatch = R.makeInstances(quadData, 64, { kind: 4, color: [.93, .89, .82], glow: .40, alpha: .62 });
     this.ocMatrix = M.identity();
+    this.swellGPU = !!R.uniforms.uSwell && !!R.uniforms.uSwAxis;
     this.built.ocarina = true;
   }
   setMode(mode) { if (mode) this.build(mode); this.mode = mode; this.hits = []; this.frame = 0; }
@@ -702,13 +900,14 @@ class ExtraVisuals {
       if (age < .06) { const k = age / .06; x = lerp(rest, contact, k * k); roll = -.10 * k; }
       else if (age < 3) { const a = age - .06; x = rest - (rest - contact) * Math.exp(-a * 6.5) * Math.cos(a * 15); roll = .16 * Math.exp(-a * 4.2) * Math.sin(a * 17 + 1.2); }
       const shiver = st ? st.shiver : 0, scream = st ? st.amp : 0;
-      const tremble = reduced * (.012 * shiver + .004 * scream);
+      const tremble = reduced * (.016 * shiver + .006 * scream) * (1 + .3 * (st ? st.lv : 0));   // 악을 쓰며 부들부들 떤다. 연달아 칠수록 더
       const sway = .012 * Math.sin(t * 1.3 + b.side) * reduced;
       const pos = [b.side * x + tremble * Math.sin(t * 61 + b.side * 2), 1.50 + tremble * .8 * Math.sin(t * 73 + 1), 0];
       b.matrix = M.model(pos, 1, [.92 + sway + tremble * 2 * Math.sin(t * 57), -b.side * .13, b.side * (.10 + roll * reduced) + tremble * Math.sin(t * 67)]);
-      /* 표정: 비명 트랙을 그대로 따른다. 쉬면 볼의 '고요' 얼굴 */
+      /* 표정: 비명 트랙을 그대로 따른다. 입은 비명 소리대로 벌어지고, 분노는 치는 순간 치솟았다가 소리가 끝난 뒤 천천히 가라앉는다.
+       * 연달아 칠수록(lv 0→2) 끝까지 일그러진다. 쉬면 꾹 참는 얼굴 */
       const P = this.lastPose[b.side < 0 ? 0 : 1];
-      const want = st ? { open: Math.min(1, st.open * 1.02 * (1 - .18 * st.round)), expression: Math.min(1.03, st.squeeze * 1.0), blink: Math.min(1, st.squeeze * .78) } : { open: 0, expression: 0, blink: 0 };
+      const want = st ? { open: Math.min(1, st.open * 1.02 * (1 - .18 * st.round)), expression: Math.min(1, st.squeeze), blink: Math.min(1, st.squeeze * (.45 + .275 * (st.lv || 0))) } : { open: 0, expression: 0, blink: 0 };
       const k = 1 - Math.exp(-dt * 26), kr = 1 - Math.exp(-dt * 9);
       P.open = lerp(P.open, want.open, want.open > P.open ? k : kr); P.expression = lerp(P.expression, want.expression, want.expression > P.expression ? k : kr * .8); P.blink = lerp(P.blink, want.blink, want.blink > P.blink ? k : kr * .8);
       for (const p of b.parts) { p.model = p.local ? M.mul(b.matrix, p.local) : b.matrix; if (p.face) { p.open = P.open; p.expression = P.expression; p.blink = P.blink; } p.seed = b.side > 0 ? 3.1 : 1.3; p.energy = 0; }
@@ -728,28 +927,30 @@ class ExtraVisuals {
     for (let i = 0; i < 2; i++) { const b = this.bells[i], o = i * 4; this.ripples[o] = b.center[0]; this.ripples[o + 1] = b.center[2]; this.ripples[o + 2] = Math.max(.004, .16 * b.ring + .10 * b.scream); this.ripples[o + 3] = 1; }
   }
   updateOcarina(t, dt, audio, reduced) {
-    const base = [0, 2.72, 0], oc = this.oc;
-    this.camera([0, 2.62, 0], [.10, .26, 1], 3.45, 2.65);
+    const base = [0, 2.84, 0], oc = this.oc, B = TUNE.breath;
+    this.camera([0, 2.74, 0], [.10, .26, 1], 3.45, 2.80);
     const st = audio ? audio.breathState() : null;
     let swellT = 0, open = 0, grief = .10, flow = 0, sink = 0, tilt = 0;
-    if (st && st.phase === 'in') { swellT = st.fill; open = .10 + .06 * st.fill; grief = .02; tilt = .045 * st.fill; }
+    /* 들숨: 들이쉰 만큼 몸통이 부푼다 */
+    if (st && st.phase === 'in') { swellT = B.swell * st.fill; open = .10 + .06 * st.fill; grief = .02; tilt = .045 * st.fill; }
+    /* 날숨: 내쉰 숨만큼 줄어들다가 원래보다 홀쭉하게 쪼그라들고, 한숨이 끝나면 천천히 원래대로 */
     else if (st && st.phase === 'out') {
-      const hu = st.kind === 'hu', u = clamp(st.t / Math.max(.3, st.dur));
-      const left = Math.max(0, 1 - smooth(0, Math.max(.4, st.dur * .75), st.t));
-      swellT = oc.swellAtOut === undefined ? 0 : oc.swellAtOut * left;
+      const hu = st.kind === 'hu', shrink = B.shrink * (.4 + .6 * clamp(st.held / 1.7)), back = smooth(st.dur * .92, st.dur + B.back, st.t);
+      swellT = lerp((oc.swellAtOut || 0) * (1 - st.out) - shrink * st.out, 0, back);
       open = hu ? Math.max(.12, st.open * 1.1) : st.open * .62; grief = .12 + .32 * smooth(0, .35, st.t) * (1 - .4 * smooth(st.dur * .8, st.dur + 1.2, st.t));
-      flow = st.flow; sink = .07 * smooth(0, .6, st.t) * (1 - smooth(st.dur, st.dur + 1.4, st.t)); tilt = -.035 * smooth(0, .8, st.t) * (1 - smooth(st.dur, st.dur + 1.4, st.t));
-      oc.kind = st.kind; void u;
+      flow = st.flow; sink = (.07 + .5 * shrink * st.out) * (1 - back); tilt = -.035 * smooth(0, .8, st.t) * (1 - smooth(st.dur, st.dur + 1.4, st.t));
+      oc.kind = st.kind;
     }
     if (!st || st.phase === 'in') oc.swellAtOut = swellT;
     const k = 1 - Math.exp(-dt * 10);
     oc.swell = lerp(oc.swell, swellT, 1 - Math.exp(-dt * 7)); oc.open = lerp(oc.open, open, k); oc.expression = lerp(oc.expression, grief, 1 - Math.exp(-dt * 4)); oc.sink = lerp(oc.sink, sink, 1 - Math.exp(-dt * 4)); oc.tilt = lerp(oc.tilt, tilt, 1 - Math.exp(-dt * 4));
-    const idle = reduced * .018 * Math.sin(t * .9), sw = 1 + .045 * oc.swell;
-    const pos = [base[0], base[1] + idle - oc.sink + .04 * oc.swell, base[2]];
-    this.ocMatrix = M.model(pos, [sw, 1 + .03 * oc.swell, 1 + .06 * oc.swell], [0, -.10, oc.tilt]);
+    const idle = reduced * .018 * Math.sin(t * .9);
+    /* 셰이더로 부풀릴 수 없는 기기에서는 통째로 키우고 줄인다 */
+    const sw = this.swellGPU ? 1 : 1 + oc.swell;
+    this.ocMatrix = M.model([base[0], base[1] + idle - oc.sink, base[2]], [this.swellGPU ? 1 : 1 + .3 * oc.swell, sw, sw], [0, -.10, oc.tilt]);
     for (const p of this.ocParts) { p.model = this.ocMatrix; if (p.face) { p.open = oc.open; p.expression = oc.expression; p.blink = 0; } p.seed = 2.2; p.energy = 0; }
     /* 입김: 날숨 동안 입에서 나와 퍼지며 사라진다 */
-    const mouth = M.point(this.ocMatrix, this.mouthLocal).slice(0, 3), mn = V.norm(V.sub(M.point(this.ocMatrix, V.add(this.mouthLocal, this.mouthNormal)).slice(0, 3), mouth));
+    const ml = this.swellGPU ? swellPoint(this.mouthLocal, oc.swell) : this.mouthLocal, mouth = M.point(this.ocMatrix, ml).slice(0, 3), mn = V.norm(V.sub(M.point(this.ocMatrix, V.add(ml, this.mouthNormal)).slice(0, 3), mouth));
     oc.mistClock = (oc.mistClock || 0) + dt * (flow > .05 ? 16 * flow : 0);
     while (oc.mistClock >= 1 && oc.mist.length < 60) { oc.mistClock--; const j = () => (Math.random() - .5); oc.mist.push({ p: V.add(mouth, [j() * .05, j() * .05, .04]), v: V.add(V.mul(mn, (.35 + .25 * Math.random()) * (oc.kind === 'hu' ? 1.3 : 1)), [-.30 + j() * .18, -.38 + j() * .14, .10 + j() * .10]), age: 0, life: 1.3 + .6 * Math.random(), a: .30 + .45 * flow, s: .05 + .04 * Math.random() }); }
     for (const m of oc.mist) { m.age += dt; m.p = V.add(m.p, V.mul(m.v, dt)); m.v = V.mul(m.v, Math.exp(-dt * 1.3)); m.v[1] += dt * .06; }
@@ -762,7 +963,11 @@ class ExtraVisuals {
     for (const mirror of mirrorDue ? [true, false] : [false]) {
       R.begin(cam, t, this.ripples, mirror); if (!mirror) R.draw(scene.floor);
       if (this.mode === 'tingsha') { for (const b of this.bells) for (const p of b.parts) R.draw(p); R.draw(this.strap); }
-      else for (const p of this.ocParts) R.draw(p);
+      else {
+        if (this.swellGPU) { R.gl.uniform4fv(R.uniforms.uSwAxis, SW_AXIS); R.u('uSwell', this.oc.swell); }
+        for (const p of this.ocParts) R.draw(p);
+        if (this.swellGPU) R.u('uSwell', 0);
+      }
       if (mirror) continue;
       if (this.mode === 'tingsha') this.drawRings(t);
       else this.drawMist();
@@ -826,7 +1031,7 @@ const DRONE_BASE = PLAY.drone.level;
 const originalSceneTick = Scene.prototype.tick, originalSceneRender = Scene.prototype.render, originalToggle = App.prototype.updateModeToggle;
 
 const ICONS = {
-  tingsha: `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M17 29L30.3 11.3Q32 9.2 33.7 11.3L47 29" fill="none" stroke="#6b4426" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><g><ellipse cx="17" cy="39" rx="14.5" ry="13" fill="#b98a48"/><ellipse cx="17" cy="39" rx="14.5" ry="13" fill="none" stroke="#e9cc96" stroke-width="1.6"/><circle cx="17" cy="29" r="2.6" fill="#7a4a24"/><path d="M9.5 35.5l4.2 1.4-4.2 1.4M24.5 35.5l-4.2 1.4 4.2 1.4" fill="none" stroke="#2a1c0e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="17" cy="44.5" rx="3.4" ry="4.6" fill="#2a1c0e"/></g><g><ellipse cx="47" cy="39" rx="14.5" ry="13" fill="#b98a48"/><ellipse cx="47" cy="39" rx="14.5" ry="13" fill="none" stroke="#e9cc96" stroke-width="1.6"/><circle cx="47" cy="29" r="2.6" fill="#7a4a24"/><path d="M39.5 35.5l4.2 1.4-4.2 1.4M54.5 35.5l-4.2 1.4 4.2 1.4" fill="none" stroke="#2a1c0e" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="47" cy="44.5" rx="3.4" ry="4.6" fill="#2a1c0e"/></g><path d="M31 33l2-6M33 36l5-3M29 36l-5-3" stroke="#e9cc96" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+  tingsha: `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M17 29L30.3 11.3Q32 9.2 33.7 11.3L47 29" fill="none" stroke="#6b4426" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/><g><ellipse cx="17" cy="39" rx="14.5" ry="13" fill="#b98a48"/><ellipse cx="17" cy="39" rx="14.5" ry="13" fill="none" stroke="#e9cc96" stroke-width="1.6"/><circle cx="17" cy="29" r="2.6" fill="#7a4a24"/><path d="M7.4 32.6L14.6 35.6M26.6 32.6L19.4 35.6" fill="none" stroke="#2a1c0e" stroke-width="2.4" stroke-linecap="round"/><path d="M8.6 37.3l4.6 1.3M25.4 37.3l-4.6 1.3" fill="none" stroke="#2a1c0e" stroke-width="1.7" stroke-linecap="round"/><rect x="11.4" y="41" width="11.2" height="7.2" rx="2.4" fill="#2a1c0e"/><path d="M12.8 42.5h8.4M13.4 46.8h7.2" stroke="#e9cc96" stroke-width="1.3" stroke-linecap="round"/></g><g><ellipse cx="47" cy="39" rx="14.5" ry="13" fill="#b98a48"/><ellipse cx="47" cy="39" rx="14.5" ry="13" fill="none" stroke="#e9cc96" stroke-width="1.6"/><circle cx="47" cy="29" r="2.6" fill="#7a4a24"/><path d="M37.4 32.6L44.6 35.6M56.6 32.6L49.4 35.6" fill="none" stroke="#2a1c0e" stroke-width="2.4" stroke-linecap="round"/><path d="M38.6 37.3l4.6 1.3M55.4 37.3l-4.6 1.3" fill="none" stroke="#2a1c0e" stroke-width="1.7" stroke-linecap="round"/><rect x="41.4" y="41" width="11.2" height="7.2" rx="2.4" fill="#2a1c0e"/><path d="M42.8 42.5h8.4M43.4 46.8h7.2" stroke="#e9cc96" stroke-width="1.3" stroke-linecap="round"/></g><path d="M31 32.6l1.8-5.4M33.3 36.1l3.3-1.9M30.7 36.1l-3.3-1.9" stroke="#e9cc96" stroke-width="1.6" stroke-linecap="round"/></svg>`,
   ocarina: `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M23 47C11 47 4 41 4 31 4 20 13 14 23 13.5 34 13 44 14.5 51 11.5 55 9.6 58 9 59.5 11 61 13 60.5 18 58 22.5 54 29 42 37.5 32 42 30.5 43 30 45 30 46.5L30 54Q30 57.5 26.5 57.5L24.5 57.5Q21.5 57.5 21.5 54Z" fill="#c4783e"/><path d="M4.8 34C7 43 15 46.5 23 46.5 30 46.5 44 38 54 29 49 34 38 40 28 41.5 17 43 8 40 4.8 34Z" fill="#9c5528"/><path d="M14 18.5C20 15.5 30 15 40 15.8" fill="none" stroke="#f0c48e" stroke-width="2.2" stroke-linecap="round" opacity=".8"/><path d="M9.5 28.5q3 2.6 6 0M19.5 28.5q3 2.6 6 0" fill="none" stroke="#2a1c0e" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="17.5" cy="35.5" rx="2.3" ry="2.8" fill="#2a1c0e"/><circle cx="35" cy="18" r="1.6" fill="#2a1c0e"/><circle cx="28" cy="19" r="2.1" fill="#2a1c0e"/><circle cx="45" cy="27.5" r="1.3" fill="#2a1c0e"/><circle cx="41" cy="31" r="1.3" fill="#2a1c0e"/><circle cx="37" cy="34.3" r="1.6" fill="#2a1c0e"/></svg>`
 };
 
@@ -997,5 +1202,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '2.0.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '3.0.0', tune: TUNE, voice: VOICE };
 })();
