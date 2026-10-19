@@ -533,7 +533,13 @@ class ExtraAudio {
     s.start(when, offset); this.voices.push(v);
     return v;
   }
-  cleanup(v) { if (v.gone) return; v.gone = true; for (const n of [v.src, v.g, v.p, v.send, v.filter]) if (n) try { n.disconnect(); } catch (_) {} this.voices = this.voices.filter(x => x !== v); }
+  cleanup(v) {
+    if (v.gone) return;
+    v.gone = true;
+    for (const s of [v.air, v.vibrato]) if (s) try { s.stop(); } catch (_) {}
+    for (const n of [v.src, v.air, v.vibrato, v.vibratoGain, v.airFilter, v.airGain, v.g, v.p, v.send, v.filter]) if (n) try { n.disconnect(); } catch (_) {}
+    this.voices = this.voices.filter(x => x !== v);
+  }
   fade(v, sec = .05, at = this.c.currentTime) {
     if (v.gone || v.fading) return; v.fading = true;
     const g = v.g.gain, t = Math.max(at, this.c.currentTime);
@@ -547,7 +553,10 @@ class ExtraAudio {
     } else if (g.cancelAndHoldAtTime) g.cancelAndHoldAtTime(t);
     else { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); }
     g.linearRampToValueAtTime(0, t + sec);
-    try { v.src.stop(t + sec + .02); } catch (_) { this.cleanup(v); }
+    const stopAt = t + sec + .02;
+    let scheduled = false;
+    for (const s of [v.src, v.air, v.vibrato]) if (s) try { s.stop(stopAt); scheduled = true; } catch (_) {}
+    if (!scheduled) this.cleanup(v);
     v.cut = t + sec;
   }
   stop() { for (const v of this.voices.slice()) this.fade(v, .06); this.recent = []; this.breath = null; }
@@ -619,15 +628,23 @@ class ExtraAudio {
     this.refill(this.pools.hu); this.refill(this.pools.ha); this.refill(this.pools.deep, 1);
     return b;
   }
-  /* 들이쉰 시간으로 음을 고른다. 둥근 기본음에 작은 배음을 보태 휴대폰에서도 음이 남게 한다. */
+  /* 들이쉰 시간으로 음을 고른다. 오카리나처럼 기본음과 약한 홀수배음만 남기고,
+   * 발음 첫머리의 짧은 바람과 늦게 붙는 작은 비브라토로 속 빈 용기 공명을 만든다. */
   playOcarina(when, dur, held, track) {
     const c = this.c, S = TUNE.sigh;
     let step = 0; while (step < S.toneHolds.length && held >= S.toneHolds[step]) step++;
     const midi = S.toneMidi[step], f0 = 440 * Math.pow(2, (midi - 69) / 12);
-    this.ocarinaWave ||= c.createPeriodicWave(new Float32Array(5), new Float32Array([0, 1, .32, .08, .02]), { disableNormalization: true });
+    // 짝수배음이 강하면 플루트·일반 관악기처럼 들린다. 삼각파에 가까운 홀수배음만 아주 약하게 둔다.
+    this.ocarinaWave ||= c.createPeriodicWave(new Float32Array(8), new Float32Array([0, 1.14, 0, -.18, 0, .045, 0, -.014]), { disableNormalization: true });
     const src = c.createOscillator(), filter = c.createBiquadFilter(), g = c.createGain(), p = c.createStereoPanner(), send = c.createGain();
-    src.setPeriodicWave(this.ocarinaWave); filter.type = 'lowpass'; filter.frequency.value = 1800; filter.Q.value = .5;
+    const vibrato = c.createOscillator(), vibratoGain = c.createGain();
+    src.setPeriodicWave(this.ocarinaWave); filter.type = 'lowpass'; filter.frequency.value = 3200; filter.Q.value = .55;
     src.frequency.setValueAtTime(f0, when); src.frequency.setValueAtTime(f0, when + dur * .55); src.frequency.linearRampToValueAtTime(f0 * .996, when + dur);
+    src.detune.setValueAtTime(-8, when); src.detune.linearRampToValueAtTime(0, when + Math.min(.11, dur * .12));
+    vibrato.frequency.value = 5.1; vibratoGain.gain.setValueAtTime(0, when);
+    vibratoGain.gain.setValueAtTime(0, when + Math.min(.32, dur * .22));
+    vibratoGain.gain.linearRampToValueAtTime(3.4, when + Math.min(.72, dur * .45));
+    vibrato.connect(vibratoGain); vibratoGain.connect(src.detune);
     const curve = new Float32Array(Math.ceil(dur * 100) + 1);
     for (let i = 0; i < curve.length; i++) {
       const t = dur * i / (curve.length - 1), flow = clamp(sampleTrack(track, 'flow', t));
@@ -635,9 +652,25 @@ class ExtraAudio {
     }
     curve[0] = curve[curve.length - 1] = 0;
     g.gain.value = 0; g.gain.setValueCurveAtTime(curve, when, dur); p.pan.value = 0; send.gain.value = .12;
+    if (!this.ocarinaAirBuf) {
+      this.ocarinaAirBuf = c.createBuffer(1, Math.round(c.sampleRate * 2.17), c.sampleRate);
+      const airData = this.ocarinaAirBuf.getChannelData(0);
+      for (let i = 0; i < airData.length; i++) airData[i] = Math.random() * 2 - 1;
+    }
+    const air = c.createBufferSource(), airFilter = c.createBiquadFilter(), airGain = c.createGain();
+    air.buffer = this.ocarinaAirBuf; air.loop = true;
+    airFilter.type = 'bandpass'; airFilter.frequency.value = 2600; airFilter.Q.value = .7;
+    airGain.gain.setValueAtTime(.065, when);
+    airGain.gain.exponentialRampToValueAtTime(.012, when + Math.min(.18, dur * .2));
+    airGain.gain.setValueAtTime(.012, when + Math.max(.18, dur - .35));
+    airGain.gain.linearRampToValueAtTime(0, when + dur);
     src.connect(filter); filter.connect(g); g.connect(p); p.connect(this.out); p.connect(send); send.connect(this.wet);
-    const v = { kind: 'ocarinaTone', src, filter, g, p, send, start: when, end: when + dur, dur, gone: false, midi, f0, toneCurve: curve };
-    src.onended = () => this.cleanup(v); src.start(when); src.stop(when + dur + .01); this.voices.push(v);
+    air.connect(airFilter); airFilter.connect(airGain); airGain.connect(g);
+    const v = { kind: 'ocarinaTone', src, air, vibrato, vibratoGain, airFilter, airGain, filter, g, p, send, start: when, end: when + dur, dur, gone: false, midi, f0, toneCurve: curve };
+    src.onended = () => this.cleanup(v);
+    src.start(when); air.start(when, Math.random() * this.ocarinaAirBuf.duration); vibrato.start(when);
+    src.stop(when + dur + .01); air.stop(when + dur + .01); vibrato.stop(when + dur + .01);
+    this.voices.push(v);
     return v;
   }
   breathState() {
@@ -1448,5 +1481,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '4.5.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '4.6.0', tune: TUNE, voice: VOICE };
 })();
