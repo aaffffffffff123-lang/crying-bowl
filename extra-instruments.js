@@ -27,7 +27,7 @@ const TUNE = {
   ting: { gain: .16, f: [2637.02, 2650.5] },   // 부딪치는 금속음 (UI 팅샤와 같은 음)
   sigh: {
     gain: .95,                 // 한숨 크기
-    toneGain: .035,            // 한숨 아래에 깔리는 낮고 둥근 오카리나 음
+    toneGain: .14,             // 낮은 오카리나 음: 한숨 밑에서도 들리도록 기존의 4배
     toneMidi: [57, 55, 52, 50, 48], // 짧은 들숨부터 A3·G3·E3·D3·C3
     toneHolds: [.9, 1.5, 2.2, 3.4], // 길게 들이쉴수록 낮은 음
     inhaleGain: .15,           // 들숨 크기 (날숨보다 한참 작게: 실제 한숨도 들숨은 거의 안 들린다)
@@ -35,7 +35,7 @@ const TUNE = {
     room: .20
   },
   breath: {
-    swell: .17,                // 끝까지 들이쉬었을 때 오카리나 몸통이 굵어지는 비율 (0.17 = 17%)
+    swell: .40,                // 끝까지 들이쉬면 몸통 단면이 40% 부푼다
     shrink: .30,               // 깊은 한숨을 다 내쉬었을 때 원래보다 홀쭉해지는 비율 (기존의 2배)
     fill: 3.4,                 // 최대 들숨 깊이까지 누르는 시간(초, 기존 1.7의 2배)
     inhaleFull: 3.8,           // 들숨 소리가 멎기 시작하는 시간(초, 기존 1.9의 2배)
@@ -446,13 +446,14 @@ class ExtraAudio {
     this.ringBus = c.createGain(); this.ringBus.connect(engine.bus);          // 금속음은 UI 팅샤와 같은 길
     const rs = c.createGain(); rs.gain.value = .32; this.ringBus.connect(rs); rs.connect(engine.convolver);
     this.voices = []; this.recent = []; this.jobs = new Map(); this.jobId = 0; this.seed = (Date.now() % 100000) + 17;
-    const pool = make => ({ items: [], pending: 0, make });
+    const pool = make => ({ items: [], pending: 0, next: 0, make });
     this.pools = {
       scream: TUNE.scream.level.map((_, lv) => [0, 1].map(side => pool(() => ({ fn: 'scream', o: { f0: TUNE.scream.f0[side] * (1 + .04 * Math.max(0, lv - 1)) * (.97 + .06 * Math.random()), level: TUNE.scream.level[lv] + .06 * (Math.random() - .5), dur: TUNE.scream.dur[lv] * (.92 + .16 * Math.random()), gentle: lv === 0 } })))),
       hu: pool(() => ({ fn: 'exhale', o: { kind: 'hu', depth: .30 + .1 * Math.random(), f0: TUNE.sigh.f0[1] } })),
       ha: pool(() => ({ fn: 'exhale', o: { kind: 'ha', depth: .62 + .1 * Math.random(), f0: TUNE.sigh.f0[0], timeScale: 1 + (TUNE.breath.exhaleScale - 1) * .4 } })),
       deep: pool(() => ({ fn: 'exhale', o: { kind: 'ha', depth: .92 + .08 * Math.random(), f0: TUNE.sigh.f0[0] * .97, timeScale: TUNE.breath.exhaleScale } }))
     };
+    for (const level of this.pools.scream) for (const p of level) p.reusable = true;
     this.tingBuf = [null, null]; this.inhaleBuf = null;
     this.worker = this.makeWorker();
   }
@@ -475,30 +476,51 @@ class ExtraAudio {
   gen(fn, o) {
     o = Object.assign({ sr: this.sr, seed: (this.seed = (this.seed * 1103515245 + 12345) >>> 0) || 7 }, o);
     return new Promise(resolve => {
-      const local = () => setTimeout(() => resolve(this.wrap(VOICE[fn](o))), 0);
+      const local = () => {
+        const run = () => {
+          /* Worker를 쓸 수 없는 환경에서도 연주 도중 무거운 비명 합성을 끼워 넣지 않는다. */
+          if ((fn === 'scream' || fn === 'ting') && this.voices.some(v => !v.gone)) { setTimeout(run, 250); return; }
+          resolve(this.wrap(VOICE[fn](o)));
+        };
+        setTimeout(run, 0);
+      };
       if (!this.worker) return local();
       const id = ++this.jobId;
       this.jobs.set(id, { done: m => resolve(this.wrap(m)), fail: local, retry: local });
       this.worker.postMessage({ id, fn, o });
     });
   }
-  refill(p, size = 2) { while (p.items.length + p.pending < size) { p.pending++; const job = p.make(); this.gen(job.fn, job.o).then(x => { p.pending--; p.items.push(x); }); } }
+  refill(p, size = 2) {
+    if (p.reusable && !this.worker) size = 1;
+    while (p.items.length + p.pending < size) {
+      p.pending++; const job = p.make();
+      const ready = this.gen(job.fn, job.o).then(x => { p.pending--; p.items.push(x); });
+      p.ready ||= ready;
+    }
+  }
   takeNow(p) { if (p.items.length) return p.items.shift(); const job = p.make(); return this.wrap(VOICE[job.fn](Object.assign({ sr: this.sr, seed: (this.seed = (this.seed * 1103515245 + 12345) >>> 0) || 7 }, job.o))); }
   warm(mode) {
     const T = this.pools;
     if (mode === 'tingsha' || mode === 'all') {
-      for (const side of [0, 1]) this.refill(T.scream[0][side], 1);
       if (!this.tingBuf[0] && !this.tingWait) this.tingWait = Promise.all([0, 1].map(side => this.gen('ting', { f: TUNE.ting.f[side], det: side ? 8.2 : 9.5 }).then(x => { this.tingBuf[side] = x; })));
+      /* 같은 AudioBuffer는 여러 번 재생해도 소모되지 않는다. 첫 단계부터 준비한다. */
+      for (const p of T.scream[0]) this.refill(p, 1);
     }
     if (mode === 'ocarina' || mode === 'all') {
       if (!this.inhaleBuf && !this.inhaleWait) this.inhaleWait = this.gen('inhale', { dur: TUNE.breath.inhaleDur, full: TUNE.breath.inhaleFull }).then(x => { this.inhaleBuf = x; });
       this.refill(T.hu, 1); this.refill(T.ha, 1);
     }
+    /* 전체 예열일 때는 기본 들숨·한숨도 먼저 요청해 두고, 높은 비명 단계로 넘어간다. */
+    if (mode === 'tingsha' || mode === 'all') for (let lv = 1; lv < T.scream.length; lv++) for (const p of T.scream[lv]) this.refill(p, 1);
     clearTimeout(this.warmMore);
     this.warmMore = setTimeout(() => {
       if (mode !== 'ocarina') { for (let lv = 0; lv < TUNE.scream.level.length; lv++) for (const side of [0, 1]) this.refill(T.scream[lv][side], lv === TUNE.scream.level.length - 1 ? 1 : 2); }
       if (mode !== 'tingsha') { this.refill(T.hu); this.refill(T.ha); this.refill(T.deep, 1); }
     }, mode === 'all' ? 2500 : 300);
+    if (mode === 'tingsha') {
+      const levels = this.worker ? [T.scream[0]] : T.scream;
+      return Promise.all([this.tingWait, ...levels.flat().map(p => p.ready)]);
+    }
   }
   play(item, { when, gain = 1, pan = 0, dest = this.out, room = 0, kind, side = 0 }) {
     const c = this.c, s = c.createBufferSource(), g = c.createGain(), p = c.createStereoPanner();
@@ -528,18 +550,34 @@ class ExtraAudio {
   }
   stop() { for (const v of this.voices.slice()) this.fade(v, .06); this.recent = []; this.breath = null; }
   lag() { return this.e.lag ? this.e.lag() : 0; }
+  /* 비명은 준비된 버퍼를 순환 재사용한다. 연타로 풀이 비어도 입력 처리 중 합성하지 않는다.
+   * 첫 준비 중에는 가장 가까운 준비된 단계를 쓰고, 미리 요청한 생성 작업은 계속된다. */
+  readyScream(lv, side) {
+    const levels = this.pools.scream;
+    for (let d = 0; d < levels.length; d++) for (const at of d ? [lv - d, lv + d] : [lv]) {
+      const p = levels[at] && levels[at][side];
+      if (p && p.items.length) return p.items[p.next++ % p.items.length];
+    }
+    return null;
+  }
   /* 띵샤를 부딪친다: 두 장이 각자 비명, 그리고 금속 울림 */
   strike(lv, delay) {
     const c = this.c, when = c.currentTime + delay, out = [];
     for (const v of this.voices) if (v.kind === 'scream') this.fade(v, .12, when);
     for (const side of [0, 1]) {
-      const item = this.takeNow(this.pools.scream[lv][side]);
+      const item = this.readyScream(lv, side);
+      if (!item) continue;
       const v = this.play(item, { when: when + side * .014, gain: (lv === 0 ? .62 : TUNE.scream.gain) * (side ? .92 : 1), pan: side ? .34 : -.34, room: TUNE.scream.room, kind: 'scream', side });
       v.lv = lv;
       this.recent.push(v); out.push(v);
       this.refill(this.pools.scream[lv][side], lv === TUNE.scream.level.length - 1 ? 1 : 2);
     }
-    for (const side of [0, 1]) if (this.tingBuf[side]) this.play(this.tingBuf[side], { when, gain: TUNE.ting.gain * (.8 + .2 * Math.max(0, lv - 1)), pan: side ? .42 : -.42, dest: this.ringBus, kind: 'ting', side });
+    for (const side of [0, 1]) if (this.tingBuf[side]) {
+      /* 연타 때 4.6초짜리 금속 꼬리가 수십 개 겹치지 않게, 오래된 울림만 부드럽게 덜어낸다. */
+      const ringing = this.voices.filter(v => v.kind === 'ting' && v.side === side && !v.fading);
+      while (ringing.length >= 3) this.fade(ringing.shift(), .12, when);
+      this.play(this.tingBuf[side], { when, gain: TUNE.ting.gain * (.8 + .2 * Math.max(0, lv - 1)), pan: side ? .42 : -.42, dest: this.ringBus, kind: 'ting', side });
+    }
     this.recent = this.recent.filter(v => c.currentTime < v.start + v.dur + 1.2);
     return out;
   }
@@ -580,7 +618,7 @@ class ExtraAudio {
     const c = this.c, S = TUNE.sigh;
     let step = 0; while (step < S.toneHolds.length && held >= S.toneHolds[step]) step++;
     const midi = S.toneMidi[step], f0 = 440 * Math.pow(2, (midi - 69) / 12);
-    this.ocarinaWave ||= c.createPeriodicWave(new Float32Array(5), new Float32Array([0, 1, .07, .02, .008]), { disableNormalization: true });
+    this.ocarinaWave ||= c.createPeriodicWave(new Float32Array(5), new Float32Array([0, 1, .16, .045, .012]), { disableNormalization: true });
     const src = c.createOscillator(), filter = c.createBiquadFilter(), g = c.createGain(), p = c.createStereoPanner(), send = c.createGain();
     src.setPeriodicWave(this.ocarinaWave); filter.type = 'lowpass'; filter.frequency.value = 1100; filter.Q.value = .5;
     src.frequency.setValueAtTime(f0, when); src.frequency.setValueAtTime(f0, when + dur * .55); src.frequency.linearRampToValueAtTime(f0 * .996, when + dur);
@@ -624,11 +662,32 @@ function onSurface(mapper, build, eyeFn, mouthFn) {
   window.faceXYZ = mapper; if (eyeFn) window.eyeContour = eyeFn; if (mouthFn) window.mouthContour = mouthFn;
   try { return build(); } finally { window.faceXYZ = keep; window.eyeContour = keepEye; window.mouthContour = keepMouth; }
 }
-const BOWL_EYE = window.eyeContour;
-/* 볼 얼굴은 입을 벌리면 눈도 같이 뜬다(울먹이는 눈). 오카리나 한숨은 눈을 감은 채로 */
-const EYES = {
-  closed: (side, a, p) => BOWL_EYE(side, a, { open: p.open * .10, grief: p.grief, blink: p.blink })
-};
+const BOWL_EYE = window.eyeContour, BOWL_MOUTH = window.mouthContour, BOWL_MORPH = window.morphGrid;
+/* 오카리나의 세 번째 표정 채널은 눈 깜빡임 대신 들숨의 구멍 벌어짐이다.
+ * 눈 테두리와 안쪽 면에 같은 윤곽을 써서 오래 들이쉴수록 실제 눈구멍이 함께 열린다. */
+function ocaEyeContour(side, a, p) {
+  const q = BOWL_EYE(side, a, { open: p.open * .10, grief: p.grief, blink: 0 }), inhale = p.blink || 0;
+  return [q[0] + side * Math.cos(a) * .025 * inhale, q[1] + Math.sin(a) * .23 * inhale];
+}
+function ocaMouthContour(a, p) { return BOWL_MOUTH(a, { open: p.open, grief: p.grief, blink: 0 }); }
+/* 기본 볼의 세 번째 표정은 입·울분이 모두 1인 울음 기준이다. 오카리나는 실제 최대
+ * 들숨(.68/.02)에서 구멍을 벌린 차이를 저장해야 눈꺼풀·코 피부에 접힘이 생기지 않는다. */
+function ocaMorphGrid(n, m, fn) {
+  const data = BOWL_MORPH(n, m, fn), pose = { open: .68, grief: .02, blink: 0 };
+  const from = gridMesh(n, m, (u, v) => fn(u, v, pose)), to = gridMesh(n, m, (u, v) => fn(u, v, { ...pose, blink: 1 }));
+  for (let i = 0; i < data.vertices.length; i += 8) for (let j = 0; j < 6; j++) data.targets[2][i / 8 * 6 + j] = to.vertices[i + j] - from.vertices[i + j];
+  return data;
+}
+function ocaFaceSteps(out, lod) {
+  return faceSteps(out, ocaMapper, lod, [.30, .22], [.16, .06], ocaEyeContour, ocaMouthContour, ocaNostrilPoint).map(step => () => {
+    const keep = window.morphGrid; window.morphGrid = ocaMorphGrid;
+    try { return step(); } finally { window.morphGrid = keep; }
+  });
+}
+function ocaNostrilPoint(side, u, v, p) {
+  const a = u * TAU, g = p.grief;
+  return ocaMapper(side * (.185 + .018 * g) + Math.cos(a) * (.040 + .020 * g) * v, 1.862 + Math.sin(a) * (.017 + .014 * g) * v, p, .006);
+}
 /* 평평한 판 위에서는 볼 얼굴의 넓은 부풂이 얼굴 테두리에서 벽처럼 끊겨 보인다: 가장자리로 갈수록 부드럽게 눕힌다 */
 function faceWindow(x, y) { return (1 - smooth(1.10, 1.64, Math.abs(x))) * smooth(.42, .80, y) * (1 - smooth(2.76, 3.03, y)); }
 /* 볼 얼굴의 울음 표정은 아래 얼굴 전체가 크게 부푼다(볼은 원통이라 자연스럽다). 평평한 판에서는 그 덩어리가 상자처럼 보여서
@@ -642,7 +701,7 @@ function flatSkin(x, y, g, wl, keep) {
  * 한 번에 다 만들면 0.5~1초쯤 화면이 멈춘다. 토막마다 얼굴 판 몇 줄씩만 만들고 사이사이 화면을 그린다.
  * 원본 hollowFace의 구성이 바뀌어 있으면 통째로 한 번에 만든다. */
 const HOLLOW_SPLIT = String(hollowFace).replace(/\s+/g, '') === 'functionhollowFace(lod=1){constI=n=>Math.max(3,Math.round(n*lod));returnmergeMorph([morphGrid(I(192),I(62),facePoint),morphGrid(I(112),I(24),(u,v,p)=>eyePatch(-1,u,v,p)),morphGrid(I(112),I(24),(u,v,p)=>eyePatch(1,u,v,p)),plainFace(-.18,.18,2.04,2.81,I(24),I(38)),plainFace(-1.66,-1.56,2.04,2.81,5,I(34)),plainFace(1.56,1.66,2.04,2.81,5,I(34)),plainFace(-1.66,1.66,2.81,FACE.top,I(110),I(18))]);}';
-function faceSteps(out, mapper, lod, cavityDepth, lensDepth, eyeFn, mouthFn) {
+function faceSteps(out, mapper, lod, cavityDepth, lensDepth, eyeFn, mouthFn, nostrilFn = nostrilPoint) {
   const I3 = n => Math.max(3, Math.round(n * lod)), I = n => Math.max(4, Math.round(n * lod)), skin = [], lens = [], nos = [], steps = [];
   const S = f => steps.push(() => onSurface(mapper, f, eyeFn, mouthFn));
   /* 격자 하나를 가로줄 몇 개씩 나눠 만든다. 이음매의 점은 원래 격자와 같은 자리라 틈이 없다 */
@@ -658,7 +717,7 @@ function faceSteps(out, mapper, lod, cavityDepth, lensDepth, eyeFn, mouthFn) {
   } else S(() => skin.push(hollowFace(lod)));
   for (const side of [-1, 1]) S(() => {
     lens.push(morphGrid(I(96), I(10), (u, v, p) => { const c = eyeContour(side, u * TAU, p), k = 1 - v * .999; return mapper(lerp(side * .77, c[0], k), lerp(2.37, c[1], k), p, .007 - v * (lensDepth[0] + lensDepth[1] * p.open)); }));
-    nos.push(morphGrid(I(20), 4, (u, v, p) => nostrilPoint(side, u, v, p)));
+    nos.push(morphGrid(I(20), 4, (u, v, p) => nostrilFn(side, u, v, p)));
   });
   let cavity = null;
   S(() => { cavity = morphGrid(I(150), I(14), (u, v, p) => { const c = mouthContour(u * TAU, p), k = 1 - v * .999; return mapper(c[0] * k, lerp(FACE.cy - p.open * .17, c[1], k), p, .010 - v * (cavityDepth[0] + cavityDepth[1] * p.open)); }); });
@@ -938,8 +997,14 @@ function swellPoint(p, s) { // 셰이더(VERT_B)와 같은 계산
 /* 얼굴: 머리(왼쪽 불룩한 부분) 앞면. 볼 얼굴 좌표 → X0,Y0 중심, SC배 */
 const OF = { SC: .60, X0: -1.62, Y0: .14, relief: 1.25, lift: .004 };
 function ocaMapper(x, y, p, extra = 0) {
+  /* 콧구멍만 늘린 검은 판을 얹지 않고 코 주변 피부까지 같은 표면 위에서 함께 벌린다. */
+  const inhale = p.blink || 0, nx = x, ny = y;
+  if (inhale) for (const side of [-1, 1]) {
+    const dx = nx - side * .194, dy = ny - 1.862, weight = Math.exp(-((dx / .13) ** 2) - ((dy / .10) ** 2)) * inhale;
+    x += dx * 1.25 * weight; y += dy * 1.90 * weight;
+  }
   const w = faceWarp(x, y, p), f = ocaFront(OF.X0 + w[0] * OF.SC, OF.Y0 + (w[1] - FACE_MID) * OF.SC);
-  const rel = (flatSkin(x, y, p.grief, p.blink || 0, .55) + extra) * OF.SC * OF.relief + OF.lift;
+  const rel = (flatSkin(x, y, p.grief, 0, .55) + extra) * OF.SC * OF.relief + OF.lift;
   return [f.p[0] + f.n[0] * rel, f.p[1] + f.n[1] * rel, f.p[2] + f.n[2] * rel];
 }
 function ocaBodyData() {
@@ -988,7 +1053,7 @@ class ExtraVisuals {
       steps.push(() => { P.shell = tingShellData(); P.rim = tingRimData(); });
       steps.push(() => this.finishTingsha(P));
     } else {
-      steps.push(...faceSteps(P, ocaMapper, .78, [.30, .22], [.16, .06], EYES.closed));
+      steps.push(...ocaFaceSteps(P, .78));
       steps.push(() => { P.body = ocaBodyData(); P.mp = mouthpieceData(); P.holes = OC_HOLES.map(h => holeData(...h)); });
       steps.push(() => this.finishOcarina(P));
     }
@@ -1098,9 +1163,9 @@ class ExtraVisuals {
     const base = [0, 2.84, 0], oc = this.oc, B = TUNE.breath;
     this.camera([0, 2.74, 0], [.10, .26, 1], 3.45, 2.80);
     const st = audio ? audio.breathState() : null;
-    let swellT = 0, open = 0, grief = .10, flow = 0, sink = 0, tilt = 0;
+    let swellT = 0, open = 0, grief = .10, inhale = 0, flow = 0, sink = 0, tilt = 0;
     /* 들숨: 들이쉰 만큼 몸통이 부푼다 */
-    if (st && st.phase === 'in') { swellT = B.swell * st.fill; open = .10 + .06 * st.fill; grief = .02; tilt = .045 * st.fill; }
+    if (st && st.phase === 'in') { swellT = B.swell * st.fill; open = .10 + .58 * st.fill; inhale = st.fill; grief = .02; tilt = .045 * st.fill; }
     /* 날숨: 내쉰 숨만큼 줄어들다가 원래보다 홀쭉하게 쪼그라들고, 한숨이 끝나면 천천히 원래대로 */
     else if (st && st.phase === 'out') {
       const hu = st.kind === 'hu', shrink = B.shrink * (.4 + .6 * clamp(st.held / B.fill)), back = smooth(st.dur * .92, st.dur + B.back, st.t);
@@ -1111,12 +1176,13 @@ class ExtraVisuals {
     }
     if (!st || st.phase === 'in') oc.swellAtOut = swellT;
     const k = 1 - Math.exp(-dt * 10);
+    oc.blink = lerp(oc.blink, inhale, k);
     oc.swell = lerp(oc.swell, swellT, 1 - Math.exp(-dt * 7)); oc.open = lerp(oc.open, open, k); oc.expression = lerp(oc.expression, grief, 1 - Math.exp(-dt * 4)); oc.sink = lerp(oc.sink, sink, 1 - Math.exp(-dt * 4)); oc.tilt = lerp(oc.tilt, tilt, 1 - Math.exp(-dt * 4));
     const idle = reduced * .018 * Math.sin(t * .9);
     /* 셰이더로 부풀릴 수 없는 기기에서는 통째로 키우고 줄인다 */
     const sw = this.swellGPU ? 1 : 1 + oc.swell;
     this.ocMatrix = M.model([base[0], base[1] + idle - oc.sink, base[2]], [this.swellGPU ? 1 : 1 + .3 * oc.swell, sw, sw], [0, -.10, oc.tilt]);
-    for (const p of this.ocParts) { p.model = this.ocMatrix; if (p.face) { p.open = oc.open; p.expression = oc.expression; p.blink = 0; } p.seed = 2.2; p.energy = 0; }
+    for (const p of this.ocParts) { p.model = this.ocMatrix; if (p.face) { p.open = oc.open; p.expression = oc.expression; p.blink = oc.blink; } p.seed = 2.2; p.energy = 0; }
     /* 입김: 날숨 동안 입에서 나와 퍼지며 사라진다 */
     const ml = this.swellGPU ? swellPoint(this.mouthLocal, oc.swell) : this.mouthLocal, mouth = M.point(this.ocMatrix, ml).slice(0, 3), mn = V.norm(V.sub(M.point(this.ocMatrix, V.add(ml, this.mouthNormal)).slice(0, 3), mouth));
     oc.mistClock = (oc.mistClock || 0) + dt * (flow > .05 ? 16 * flow : 0);
@@ -1176,12 +1242,12 @@ class ExtraVisuals {
       return false;
     }
     if (!this.ocMatrix) return false;
-    const poly = [];
-    for (const p of OC_TOP) poly.push(pr(M.point(this.ocMatrix, [OC.X(p[0]), OC.Y(p[1]), 0]).slice(0, 3)));
-    for (let i = OC_BOT.length - 1; i >= 0; i--) poly.push(pr(M.point(this.ocMatrix, [OC.X(OC_BOT[i][0]), OC.Y(OC_BOT[i][1]), 0]).slice(0, 3)));
+    const poly = [], project = p => pr(M.point(this.ocMatrix, this.swellGPU ? swellPoint(p, this.oc.swell) : p).slice(0, 3));
+    for (const p of OC_TOP) poly.push(project([OC.X(p[0]), OC.Y(p[1]), 0]));
+    for (let i = OC_BOT.length - 1; i >= 0; i--) poly.push(project([OC.X(OC_BOT[i][0]), OC.Y(OC_BOT[i][1]), 0]));
     let inside = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a[1] > y) !== (b[1] > y) && x < (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]) + a[0]) inside = !inside; }
     if (inside) return true;
-    const m1 = pr(M.point(this.ocMatrix, [-1.62, -2.5, 0]).slice(0, 3)), m2 = pr(M.point(this.ocMatrix, [-.80, -1.3, 0]).slice(0, 3));
+    const m1 = project([-1.62, -2.5, 0]), m2 = project([-.80, -1.3, 0]);
     if (x > Math.min(m1[0], m2[0]) - pad && x < Math.max(m1[0], m2[0]) + pad && y > Math.min(m1[1], m2[1]) - pad && y < Math.max(m1[1], m2[1]) + pad) return true;
     if (pad) { let best = 1e9; for (const p of poly) best = Math.min(best, Math.hypot(p[0] - x, p[1] - y)); return best < pad; }
     return false;
@@ -1299,16 +1365,18 @@ class ExtraController {
     await this.app.start();
     if (request !== this.request || !this.app.audio.ready) return;
     this.sound ||= new ExtraAudio(this.app.audio);
-    this.sound.warm(mode);
-    /* 모양이 아직 덜 됐으면 남은 토막을 하나씩 만들며 화면은 계속 그린다 (탭이 깜빡이는 동안) */
+    const soundReady = this.sound.warm(mode);
+    /* 모양과 첫 비명을 함께 준비한다. 첫 터치의 약한 비명이 빠지는 일 없이 화면은 계속 그린다. */
     const tab = $(`#show-${mode}`);
     try {
+      tab?.classList.add('loading');
       while (!this.visual.built[mode]) {
-        tab?.classList.add('loading');
         await new Promise(r => setTimeout(r, 16));
         if (request !== this.request) return;
         this.visual.buildStep(mode);
       }
+      await soundReady;
+      if (request !== this.request) return;
     } catch (e) { console.error(e); return; } finally { tab?.classList.remove('loading'); }
     await originalAppendix.call(this.app, false);
     if (request !== this.request) return;
@@ -1370,5 +1438,5 @@ App.prototype.updateModeToggle = function (...args) { const value = originalTogg
 App.prototype.playTick = function (...args) { if (this.extraInstruments?.mode) return; return originalPlayTick.apply(this, args); };
 Scene.prototype.tick = function (t, dt, audio) { if (this.extraInstruments?.mode) return this.extraInstruments.tick(t, dt); return originalSceneTick.call(this, t, dt, audio); };
 Scene.prototype.render = function (t) { if (this.extraInstruments?.mode) return this.extraInstruments.visual.render(t); return originalSceneRender.call(this, t); };
-window.CryingBowlExtra = { version: '4.2.0', tune: TUNE, voice: VOICE };
+window.CryingBowlExtra = { version: '4.3.0', tune: TUNE, voice: VOICE };
 })();
